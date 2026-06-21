@@ -24,7 +24,7 @@ export function usePlaces() {
           place_categories(category_id,categories(name,slug,icon)),
           certifications(id,cert_type,valid_until,is_active,certification_authorities(name)),
           opening_hours(day_of_week,open_time,close_time,is_closed),
-          reviews(rating,content,created_at,profiles(display_name))
+          reviews(id,place_id,user_id,rating,content,created_at,profiles(display_name))
         `).eq('is_deleted', false).order('name')
       ])
 

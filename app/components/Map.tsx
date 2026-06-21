@@ -23,12 +23,13 @@ interface Props {
 }
 
 export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMobile, onTileChange, onSelect, onLocate }: Props) {
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const mapRef        = useRef<any>(null)
-  const tileLayerRef  = useRef<any>(null)
-  const markersRef    = useRef<globalThis.Map<string, any>>(new globalThis.Map())
-  const userMarkerRef = useRef<any>(null)
-  const fittedRef     = useRef(false)
+  const containerRef   = useRef<HTMLDivElement>(null)
+  const mapRef         = useRef<any>(null)
+  const tileLayerRef   = useRef<any>(null)
+  const markersRef     = useRef<globalThis.Map<string, any>>(new globalThis.Map())
+  const clusterRef     = useRef<any>(null)
+  const userMarkerRef  = useRef<any>(null)
+  const fittedRef      = useRef(false)
   const [layersOpen, setLayersOpen] = useState(false)
 
   /* ────────────────────────────────────
@@ -41,7 +42,10 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return
 
-    import('leaflet').then(({ default: L }) => {
+    Promise.all([
+      import('leaflet'),
+      import('leaflet.markercluster'),
+    ]).then(([{ default: L }]) => {
       if (mapRef.current || !containerRef.current) return
 
       const map = L.map(containerRef.current, {
@@ -57,6 +61,25 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
 
       tileLayerRef.current = tile
       mapRef.current = map
+
+      // Groupe de clustering : regroupe les marqueurs proches en un seul repère avec compteur,
+      // qui se "dissout" automatiquement au zoom pour révéler les marqueurs individuels.
+      const cluster = (L as any).markerClusterGroup({
+        maxClusterRadius: 55,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        disableClusteringAtZoom: 17,
+        iconCreateFunction: (c: any) => {
+          const count = c.getChildCount()
+          const size = count < 10 ? 38 : count < 50 ? 46 : 54
+          return L.divIcon({
+            html: `<div class="km-cluster" style="width:${size}px;height:${size}px">${count}</div>`,
+            className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+          })
+        },
+      })
+      cluster.addTo(map)
+      clusterRef.current = cluster
 
       // Fix principal : invalider la taille une fois que le DOM est stable
       requestAnimationFrame(() => {
@@ -78,6 +101,7 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
         mapRef.current.remove()
         mapRef.current = null
         markersRef.current.clear()
+        clusterRef.current = null
       }
     }
   }, [])
@@ -117,14 +141,14 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
 
   /* Marqueurs des lieux */
   useEffect(() => {
-    if (!mapRef.current) return
+    if (!mapRef.current || !clusterRef.current) return
     import('leaflet').then(({ default: L }) => {
       const visibleIds = new Set(places.map(p => p.id))
 
       // Supprimer les marqueurs qui ne sont plus visibles
       markersRef.current.forEach((marker, id) => {
         if (!visibleIds.has(id)) {
-          mapRef.current.removeLayer(marker)
+          clusterRef.current.removeLayer(marker)
           markersRef.current.delete(id)
         }
       })
@@ -152,19 +176,27 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
         } else {
           const m = L.marker([p.latitude!, p.longitude!], { icon })
           m.on('click', () => onSelect(p.id))
-          m.addTo(mapRef.current)
+          clusterRef.current.addLayer(m)
           markersRef.current.set(p.id, m)
         }
       })
     })
   }, [places, selectedId, onSelect])
 
-  /* Fly to selected */
+  /* Fly to selected — révèle le marqueur même s'il est actuellement regroupé dans un cluster */
   useEffect(() => {
-    if (!mapRef.current || !selectedId) return
+    if (!mapRef.current || !selectedId || !clusterRef.current) return
+    const marker = markersRef.current.get(selectedId)
     const p = places.find(x => x.id === selectedId)
     if (!p?.latitude || !p?.longitude) return
-    mapRef.current.flyTo([p.latitude, p.longitude], Math.max(mapRef.current.getZoom?.() ?? 6, 15), { duration: 0.5 })
+
+    if (marker && clusterRef.current.hasLayer(marker)) {
+      clusterRef.current.zoomToShowLayer(marker, () => {
+        mapRef.current.flyTo([p.latitude, p.longitude], Math.max(mapRef.current.getZoom?.() ?? 6, 15), { duration: 0.4 })
+      })
+    } else {
+      mapRef.current.flyTo([p.latitude, p.longitude], Math.max(mapRef.current.getZoom?.() ?? 6, 15), { duration: 0.5 })
+    }
   }, [selectedId, places])
 
   /* Fit bounds initial */

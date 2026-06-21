@@ -82,6 +82,22 @@ html, body {
   z-index: 1000 !important;
 }
 
+/* ── Clusters (regroupement au dézoom) ── */
+.km-cluster {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: var(--font);
+  border: 3px solid #fff;
+  box-shadow: 0 3px 10px rgba(184,134,11,.4);
+  cursor: pointer;
+  transition: transform .15s;
+}
+.km-cluster:hover { transform: scale(1.08); }
+
 /* ── User dot ── */
 .user-dot { width:14px; height:14px; border-radius:50%; background:var(--blue); border:2.5px solid #fff; box-shadow:0 0 0 2px rgba(10,124,255,.2); }
 .user-pulse { position:absolute; inset:-9px; border-radius:50%; background:rgba(10,124,255,.15); animation:pulse 2s ease-out infinite; }

@@ -21,6 +21,9 @@ export interface OpeningHour {
 }
 
 export interface Review {
+  id: string
+  place_id: string
+  user_id: string
   rating: number
   content: string | null
   created_at: string

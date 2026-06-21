@@ -32,6 +32,13 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
   const [confirmDeletePlace, setConfirmDeletePlace] = useState(false)
   const [deleteSent, setDeleteSent] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [reviews, setReviews] = useState<any[]>(p._reviews || [])
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewContent, setReviewContent] = useState('')
+  const [reviewBusy, setReviewBusy] = useState(false)
+  const [reviewError, setReviewError] = useState('')
+  const myReview = reviews.find(r => r.user_id === profile?.id)
   const swipeStartX = useRef<number | null>(null)
   const swipeStartY = useRef<number | null>(null)
 
@@ -40,6 +47,11 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
     setActivePhoto(0)
     setConfirmDeletePlace(false)
     setDeleteSent(false)
+    setReviews(p._reviews || [])
+    setShowReviewForm(false)
+    setReviewRating(5)
+    setReviewContent('')
+    setReviewError('')
     loadPhotos()
   }, [p.id])
 
@@ -83,6 +95,41 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
     setBusy(false)
     setConfirmDeletePlace(false)
     setDeleteSent(true)
+  }
+
+  async function submitReview() {
+    if (!session || !profile) { onAuthRequired(); return }
+    setReviewBusy(true)
+    setReviewError('')
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .upsert(
+          { place_id: p.id, user_id: profile.id, rating: reviewRating, content: reviewContent.trim() || null },
+          { onConflict: 'place_id,user_id' }
+        )
+        .select('id,place_id,user_id,rating,content,created_at,profiles(display_name)')
+        .single()
+      if (error) throw error
+      setReviews(prev => {
+        const others = prev.filter(r => r.user_id !== profile.id)
+        return [data, ...others]
+      })
+      setShowReviewForm(false)
+    } catch (e: any) {
+      setReviewError(e.message || "Erreur lors de l'envoi de l'avis")
+    } finally {
+      setReviewBusy(false)
+    }
+  }
+
+  function openReviewForm() {
+    if (!session) { onAuthRequired(); return }
+    if (myReview) {
+      setReviewRating(myReview.rating)
+      setReviewContent(myReview.content || '')
+    }
+    setShowReviewForm(true)
   }
 
   /* Navigation entre fiches par swipe horizontal (geste type "carrousel mobile").
@@ -308,12 +355,72 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
         </Section>
 
         <Section title="Avis clients">
-          {p._reviews.length === 0 ? (
+          {/* Bouton pour laisser / modifier son avis */}
+          {!showReviewForm && (
+            <button onClick={openReviewForm} style={{
+              width: '100%', height: 36, marginBottom: 10, borderRadius: 8,
+              border: '1px solid var(--border)', background: 'var(--bg)',
+              color: 'var(--text2)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              fontFamily: 'var(--font)',
+            }}>
+              <i className={`ti ${myReview ? 'ti-edit' : 'ti-star'}`} />
+              {myReview ? 'Modifier mon avis' : 'Laisser un avis'}
+            </button>
+          )}
+
+          {/* Formulaire avis */}
+          {showReviewForm && (
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: 12, marginBottom: 12 }}>
+              {reviewError && (
+                <div style={{ fontSize: 12, color: 'var(--red)', marginBottom: 8 }}>{reviewError}</div>
+              )}
+              <div style={{ display: 'flex', gap: 4, marginBottom: 10, justifyContent: 'center' }}>
+                {Array.from({ length: 5 }, (_, j) => (
+                  <i
+                    key={j}
+                    onClick={() => setReviewRating(j + 1)}
+                    className={`ti ti-star${j < reviewRating ? '-filled' : ''}`}
+                    style={{ fontSize: 26, color: 'var(--gold)', cursor: 'pointer' }}
+                  />
+                ))}
+              </div>
+              <textarea
+                value={reviewContent}
+                onChange={e => setReviewContent(e.target.value)}
+                placeholder="Votre avis (facultatif)…"
+                style={{
+                  width: '100%', height: 64, resize: 'none', padding: '8px 10px',
+                  border: '1px solid var(--border)', borderRadius: 7, fontSize: 12.5,
+                  fontFamily: 'var(--font)', outline: 'none', marginBottom: 8, background: '#fff',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setShowReviewForm(false)} style={{
+                  flex: '0 0 auto', height: 34, padding: '0 14px', borderRadius: 7,
+                  border: '1px solid var(--border)', background: '#fff', color: 'var(--text2)',
+                  fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font)',
+                }}>Annuler</button>
+                <button onClick={submitReview} disabled={reviewBusy} style={{
+                  flex: 1, height: 34, borderRadius: 7, border: 'none',
+                  background: 'var(--gold)', color: '#fff', fontSize: 12.5, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'var(--font)',
+                }}>
+                  {reviewBusy ? 'Envoi…' : 'Publier'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {reviews.length === 0 ? (
             <div style={{ color: 'var(--text3)', fontSize: 12.5 }}>Aucun avis pour l'instant.</div>
-          ) : p._reviews.slice(0, 5).map((r, i) => (
-            <div key={i} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', marginBottom: 8 }}>
+          ) : reviews.slice(0, 8).map((r, i) => (
+            <div key={r.id || i} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', marginBottom: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                <span style={{ fontSize: 12, fontWeight: 600 }}>{r.profiles?.display_name || 'Anonyme'}</span>
+                <span style={{ fontSize: 12, fontWeight: 600 }}>
+                  {r.profiles?.display_name || 'Anonyme'}
+                  {r.user_id === profile?.id && <span style={{ color: 'var(--gold)', fontWeight: 500 }}> (vous)</span>}
+                </span>
                 <span>{Array.from({ length: 5 }, (_, j) => <i key={j} className={`ti ti-star${j < r.rating ? '-filled' : ''}`} style={{ fontSize: 11, color: 'var(--gold)' }} />)}</span>
               </div>
               {r.content && <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5 }}>{r.content}</div>}
