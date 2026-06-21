@@ -28,7 +28,6 @@ export default function Home() {
   const [filter, setFilter]         = useState('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [userLoc, setUserLoc]       = useState<{ lat: number; lng: number } | null>(null)
-  const [sortProx, setSortProx]     = useState(false)
   const [tileStyle, setTile]        = useState<TileStyle>('plan')
   const [authOpen, setAuthOpen]     = useState(false)
   const [addOpen, setAddOpen]       = useState(false)
@@ -45,11 +44,12 @@ export default function Home() {
       const matchCat = filter === 'all' || p._cats.includes(filter)
       return matchQ && matchCat
     })
-    if (sortProx && userLoc) {
+    // Tri automatique par proximité dès que la position GPS est connue
+    if (userLoc) {
       list = [...list].sort((a, b) => (a._distanceKm ?? Infinity) - (b._distanceKm ?? Infinity))
     }
     return list
-  }, [places, query, filter, sortProx, userLoc])
+  }, [places, query, filter, userLoc])
 
   const selected = useMemo<Place | null>(
     () => places.find(p => p.id === selectedId) ?? null,
@@ -63,7 +63,6 @@ export default function Home() {
         const { latitude: lat, longitude: lng } = pos.coords
         setUserLoc({ lat, lng })
         computeDistances(lat, lng)
-        setSortProx(true)
         if (!silent) toast('Localisé', 'Carte centrée sur votre position', 'success')
       },
       () => { if (!silent) toast('Erreur', 'Impossible de récupérer votre position', 'error') },
@@ -102,7 +101,6 @@ export default function Home() {
 
   function selectPlace(id: string) {
     setSelectedId(id)
-    setSortProx(false)
     if (isMobile) setSheetSnap(1) // ouvre le détail à mi-écran sur mobile (l'utilisateur peut le remonter)
   }
 
@@ -228,8 +226,8 @@ export default function Home() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar
           places={filtered} categories={categories} activeFilter={filter} selectedId={selectedId}
-          loading={loading} sortByProximity={sortProx} userLoc={userLoc}
-          onFilter={setFilter} onSelect={selectPlace} onToggleSort={() => setSortProx(s => !s)}
+          loading={loading} userLoc={userLoc}
+          onFilter={setFilter} onSelect={selectPlace}
         />
 
         <KosherMap

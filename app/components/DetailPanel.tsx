@@ -96,8 +96,10 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
       borderLeft: fullscreen ? 'none' : '1px solid var(--border)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0,
     }}>
-      {/* Hero photo */}
-      <div style={{ height: 180, background: 'var(--bg)', position: 'relative', flexShrink: 0, overflow: 'hidden' }}>
+      {/* Zone scrollable unique : la photo défile avec le reste du contenu */}
+      <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        {/* Hero photo */}
+        <div style={{ height: 180, background: 'var(--bg)', position: 'relative', flexShrink: 0, overflow: 'hidden' }}>
         {placePhotos.length > 0 ? (
           <>
             <img
@@ -175,8 +177,8 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
         </button>
       </div>
 
-      {/* Corps */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
+      {/* Corps — dans le même flux scrollable que la photo ci-dessus */}
+      <div style={{ padding: 18 }}>
         <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.3px', lineHeight: 1.2, marginBottom: 8 }}>
           {p.name}
         </div>
@@ -310,6 +312,8 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
           )}
         </Section>
       </div>
+      </div>
+      {/* ↑ fin de la zone scrollable unique (photo + corps) */}
 
       <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, flexShrink: 0 }}>
         <Btn onClick={onShare}><i className="ti ti-share" /> Partager</Btn>

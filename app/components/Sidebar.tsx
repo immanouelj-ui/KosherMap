@@ -9,16 +9,14 @@ interface Props {
   activeFilter: string
   selectedId: string | null
   loading: boolean
-  sortByProximity: boolean
   userLoc: { lat: number; lng: number } | null
   onFilter: (cat: string) => void
   onSelect: (id: string) => void
-  onToggleSort: () => void
 }
 
 export default function Sidebar({
   places, categories, activeFilter, selectedId,
-  loading, sortByProximity, userLoc, onFilter, onSelect, onToggleSort,
+  loading, userLoc, onFilter, onSelect,
 }: Props) {
   return (
     <aside style={{
@@ -43,16 +41,14 @@ export default function Sidebar({
           {' '}lieu{places.length > 1 ? 'x' : ''}
         </span>
         {userLoc && (
-          <button onClick={onToggleSort} style={{
-            border: 'none', background: sortByProximity ? 'var(--gold-bg)' : 'transparent',
-            color: sortByProximity ? 'var(--gold)' : 'var(--text3)',
-            fontSize: 11.5, fontWeight: 600, cursor: 'pointer', padding: '3px 8px',
+          <div style={{
+            background: 'var(--gold-bg)', color: 'var(--gold)',
+            fontSize: 11.5, fontWeight: 600, padding: '3px 8px',
             borderRadius: 10, display: 'flex', alignItems: 'center', gap: 4,
-            fontFamily: 'var(--font)', transition: 'all .15s',
           }}>
-            <i className="ti ti-arrows-sort" style={{ fontSize: 12 }} />
-            {sortByProximity ? 'Par proximité' : 'Trier'}
-          </button>
+            <i className="ti ti-map-pin-check" style={{ fontSize: 12 }} />
+            Triés par proximité
+          </div>
         )}
       </div>
 

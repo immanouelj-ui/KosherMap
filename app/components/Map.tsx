@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Place } from '@/types'
 import { CAT_ICONS } from '@/lib/utils'
 
@@ -29,6 +29,7 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
   const markersRef    = useRef<globalThis.Map<string, any>>(new globalThis.Map())
   const userMarkerRef = useRef<any>(null)
   const fittedRef     = useRef(false)
+  const [layersOpen, setLayersOpen] = useState(false)
 
   /* ────────────────────────────────────
      Init carte (une seule fois)
@@ -238,6 +239,43 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
         zIndex: 500,
         display: 'flex', flexDirection: 'column', gap: 6,
       }}>
+        {/* Bouton calques (mobile uniquement) avec menu déroulant */}
+        {isMobile && (
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setLayersOpen(o => !o)} style={{
+              width: 42, height: 42, border: '1px solid var(--border)',
+              background: layersOpen ? 'var(--gold)' : 'rgba(255,255,255,.95)',
+              backdropFilter: 'blur(12px)', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: layersOpen ? '#fff' : 'var(--text2)', fontSize: 19,
+              boxShadow: 'var(--shadow-md)', transition: 'all .15s',
+            }}>
+              <i className="ti ti-layers-intersect" />
+            </button>
+
+            {layersOpen && (
+              <div style={{
+                position: 'absolute', right: 50, top: 0,
+                background: 'rgba(255,255,255,.97)', backdropFilter: 'blur(12px)',
+                border: '1px solid var(--border)', borderRadius: 14,
+                padding: 5, display: 'flex', flexDirection: 'column', gap: 2,
+                boxShadow: 'var(--shadow-md)', minWidth: 110,
+              }}>
+                {(Object.keys(TILES) as TileStyle[]).map(s => (
+                  <button key={s} onClick={() => { onTileChange(s); setLayersOpen(false) }} style={{
+                    padding: '9px 12px', borderRadius: 9, fontSize: 13, fontWeight: 500,
+                    border: 'none', cursor: 'pointer', fontFamily: 'var(--font)', textAlign: 'left',
+                    background: tileStyle === s ? 'var(--gold-bg)' : 'transparent',
+                    color: tileStyle === s ? 'var(--gold)' : 'var(--text2)',
+                  }}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {(isMobile
           ? [{ icon: 'ti-current-location', action: onLocate }]
           : [
