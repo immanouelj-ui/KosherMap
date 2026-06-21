@@ -179,7 +179,7 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
   }, [places, userLoc])
 
   return (
-    <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
       {/* Conteneur Leaflet — doit avoir une taille explicite */}
       <div
         ref={containerRef}

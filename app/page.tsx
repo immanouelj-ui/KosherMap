@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import TopBar             from './components/TopBar'
 import TopBarMobile        from './components/TopBarMobile'
@@ -56,20 +56,28 @@ export default function Home() {
     [places, selectedId]
   )
 
-  function locate() {
-    if (!navigator.geolocation) { toast('Indisponible', 'Géolocalisation non supportée', 'error'); return }
+  function locate(silent = false) {
+    if (!navigator.geolocation) { if (!silent) toast('Indisponible', 'Géolocalisation non supportée', 'error'); return }
     navigator.geolocation.getCurrentPosition(
       pos => {
         const { latitude: lat, longitude: lng } = pos.coords
         setUserLoc({ lat, lng })
         computeDistances(lat, lng)
         setSortProx(true)
-        toast('Localisé', 'Carte centrée sur votre position', 'success')
+        if (!silent) toast('Localisé', 'Carte centrée sur votre position', 'success')
       },
-      () => toast('Erreur', 'Impossible de récupérer votre position', 'error'),
+      () => { if (!silent) toast('Erreur', 'Impossible de récupérer votre position', 'error') },
       { enableHighAccuracy: true, timeout: 8000 }
     )
   }
+
+  /* Géolocalisation automatique à l'ouverture sur mobile (silencieuse, sans toast d'erreur si refusée) */
+  useEffect(() => {
+    if (isMobile && ready) {
+      locate(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, ready])
 
   function openAdd() {
     if (!session) { setPending('add'); setAuthOpen(true); return }
@@ -121,7 +129,7 @@ export default function Home() {
   /* ───────────────────────── MOBILE ───────────────────────── */
   if (isMobile) {
     return (
-      <div style={{ height: '100dvh', width: '100vw', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ height: '100dvh', width: '100vw', position: 'relative', overflow: 'hidden', display: 'flex' }}>
         <KosherMap
           places={filtered}
           selectedId={selectedId}
