@@ -289,7 +289,7 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
           )}
           {p.avg_rating != null && (
             <span style={{ fontSize: 11.5, color: 'var(--text2)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <i className="ti ti-star-filled" style={{ color: 'var(--gold)', fontSize: 12 }} />
+              <span style={{ color: 'var(--gold)', fontSize: 13, lineHeight: 1 }}>★</span>
               {rating} <span style={{ color: 'var(--text3)' }}>({p.review_count || 0})</span>
             </span>
           )}
@@ -388,10 +388,10 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
                     }}
                     aria-label={`${j + 1} étoile${j > 0 ? 's' : ''}`}
                   >
-                    <i
-                      className={`ti ti-star${j < reviewRating ? '-filled' : ''}`}
-                      style={{ fontSize: 26, color: 'var(--gold)', pointerEvents: 'none' }}
-                    />
+                    <span style={{
+                      fontSize: 30, lineHeight: 1, pointerEvents: 'none',
+                      color: j < reviewRating ? 'var(--gold)' : 'rgba(0,0,0,.15)',
+                    }}>★</span>
                   </button>
                 ))}
               </div>
@@ -431,7 +431,9 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
                   {r.profiles?.display_name || 'Anonyme'}
                   {r.user_id === profile?.id && <span style={{ color: 'var(--gold)', fontWeight: 500 }}> (vous)</span>}
                 </span>
-                <span>{Array.from({ length: 5 }, (_, j) => <i key={j} className={`ti ti-star${j < r.rating ? '-filled' : ''}`} style={{ fontSize: 11, color: 'var(--gold)' }} />)}</span>
+                <span>{Array.from({ length: 5 }, (_, j) => (
+                  <span key={j} style={{ fontSize: 12, color: j < r.rating ? 'var(--gold)' : 'rgba(0,0,0,.15)' }}>★</span>
+                ))}</span>
               </div>
               {r.content && <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5 }}>{r.content}</div>}
               <div style={{ fontSize: 10.5, color: 'var(--text3)', marginTop: 5 }}>
