@@ -56,6 +56,22 @@ export default function Home() {
     [places, selectedId]
   )
 
+  // Index du lieu sélectionné dans la liste actuellement affichée (filtrée/triée),
+  // pour permettre de naviguer vers le précédent/suivant depuis le détail.
+  const selectedIndex = useMemo(
+    () => selectedId ? filtered.findIndex(p => p.id === selectedId) : -1,
+    [filtered, selectedId]
+  )
+  const hasPrev = selectedIndex > 0
+  const hasNext = selectedIndex >= 0 && selectedIndex < filtered.length - 1
+
+  function goPrev() {
+    if (hasPrev) setSelectedId(filtered[selectedIndex - 1].id)
+  }
+  function goNext() {
+    if (hasNext) setSelectedId(filtered[selectedIndex + 1].id)
+  }
+
   function locate(silent = false) {
     if (!navigator.geolocation) { if (!silent) toast('Indisponible', 'Géolocalisation non supportée', 'error'); return }
     navigator.geolocation.getCurrentPosition(
@@ -77,6 +93,16 @@ export default function Home() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, ready])
+
+  /* Si la position GPS a été obtenue avant que les lieux finissent de charger
+     (race condition fréquente sur mobile), on recalcule les distances dès
+     que la liste de lieux se peuple, pour que le tri par proximité s'applique bien. */
+  useEffect(() => {
+    if (userLoc && places.length > 0) {
+      computeDistances(userLoc.lat, userLoc.lng)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [places.length])
 
   function openAdd() {
     if (!session) { setPending('add'); setAuthOpen(true); return }
@@ -171,7 +197,7 @@ export default function Home() {
         )}
 
         {selected ? (
-          <BottomSheet snapPoints={[6, 50, 92]} initial={sheetSnap} onSnapChange={i => { setSheetSnap(i); if (i === 0) closeDetail() }}>
+          <BottomSheet key="detail" snapPoints={[6, 50, 92]} initial={sheetSnap} onSnapChange={i => { setSheetSnap(i); if (i === 0) closeDetail() }}>
             <DetailPanel
               place={selected}
               categories={categories}
@@ -182,10 +208,14 @@ export default function Home() {
               onEdit={openEdit}
               onShare={share}
               onAuthRequired={() => setAuthOpen(true)}
+              onPrev={goPrev}
+              onNext={goNext}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
             />
           </BottomSheet>
         ) : (
-          <BottomSheet snapPoints={[14, 50, 92]} initial={sheetSnap} onSnapChange={setSheetSnap}>
+          <BottomSheet key="list" snapPoints={[14, 50, 92]} initial={sheetSnap} onSnapChange={setSheetSnap}>
             <div style={{ padding: '0 16px 16px' }}>
               <div style={{ fontSize: 12.5, color: 'var(--text3)', padding: '2px 2px 10px' }}>
                 <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{filtered.length}</span> lieu{filtered.length > 1 ? 'x' : ''} trouvé{filtered.length > 1 ? 's' : ''}
@@ -240,6 +270,7 @@ export default function Home() {
             place={selected} categories={categories} session={session} profile={profile}
             onClose={() => setSelectedId(null)} onEdit={openEdit} onShare={share}
             onAuthRequired={() => setAuthOpen(true)}
+            onPrev={goPrev} onNext={goNext} hasPrev={hasPrev} hasNext={hasNext}
           />
         )}
       </div>

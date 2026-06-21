@@ -25,6 +25,12 @@ export default function BottomSheet({ children, snapPoints, initial, onSnapChang
     return () => window.removeEventListener('resize', update)
   }, [])
 
+  // Le parent peut imposer un nouveau snap point (ex: sélection d'un lieu sur la carte) :
+  // on resynchronise l'état interne à chaque fois que la prop change.
+  useEffect(() => {
+    setIndex(initial)
+  }, [initial])
+
   const heightPct = snapPoints[index] ?? snapPoints[0]
   const targetPx = (heightPct / 100) * vh
 

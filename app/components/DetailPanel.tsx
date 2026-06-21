@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Place, Category } from '@/types'
 import { CAT_ICONS, DAYS, isOpenNow, formatDistance } from '@/lib/utils'
@@ -20,14 +20,20 @@ interface Props {
   onEdit: () => void
   onShare: () => void
   onAuthRequired: () => void
+  onPrev?: () => void
+  onNext?: () => void
+  hasPrev?: boolean
+  hasNext?: boolean
 }
 
-export default function DetailPanel({ place: p, categories, session, profile, fullscreen, onClose, onEdit, onShare, onAuthRequired }: Props) {
+export default function DetailPanel({ place: p, categories, session, profile, fullscreen, onClose, onEdit, onShare, onAuthRequired, onPrev, onNext, hasPrev, hasNext }: Props) {
   const [placePhotos, setPlacePhotos] = useState<PlacePhoto[]>([])
   const [activePhoto, setActivePhoto] = useState(0)
   const [confirmDeletePlace, setConfirmDeletePlace] = useState(false)
   const [deleteSent, setDeleteSent] = useState(false)
   const [busy, setBusy] = useState(false)
+  const swipeStartX = useRef<number | null>(null)
+  const swipeStartY = useRef<number | null>(null)
 
   useEffect(() => {
     setPlacePhotos([])
@@ -79,6 +85,23 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
     setDeleteSent(true)
   }
 
+  /* Navigation entre fiches par swipe horizontal (geste type "carrousel mobile").
+     On ignore le geste si le mouvement est surtout vertical (= l'utilisateur scrolle le contenu). */
+  function onTouchStart(e: React.TouchEvent) {
+    swipeStartX.current = e.touches[0].clientX
+    swipeStartY.current = e.touches[0].clientY
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    if (swipeStartX.current == null || swipeStartY.current == null) return
+    const dx = e.changedTouches[0].clientX - swipeStartX.current
+    const dy = e.changedTouches[0].clientY - swipeStartY.current
+    swipeStartX.current = null
+    swipeStartY.current = null
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return // pas assez horizontal
+    if (dx < 0 && hasNext) onNext?.()
+    if (dx > 0 && hasPrev) onPrev?.()
+  }
+
   const hasCert     = p._certifications.some(c => c.is_active)
   const activeCerts = p._certifications.filter(c => c.is_active)
   const cat         = p._cats[0] || ''
@@ -89,13 +112,17 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
   const rating      = Number(p.avg_rating || 0).toFixed(1)
 
   return (
-    <aside className="slide-in" style={{
-      width: fullscreen ? '100%' : 340,
-      height: fullscreen ? '100%' : 'auto',
-      background: '#fff',
-      borderLeft: fullscreen ? 'none' : '1px solid var(--border)',
-      display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0,
-    }}>
+    <aside
+      className="slide-in"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      style={{
+        width: fullscreen ? '100%' : 340,
+        height: fullscreen ? '100%' : 'auto',
+        background: '#fff',
+        borderLeft: fullscreen ? 'none' : '1px solid var(--border)',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0,
+      }}>
       {/* Zone scrollable unique : la photo défile avec le reste du contenu */}
       <div style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         {/* Hero photo */}
@@ -175,6 +202,30 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
         }}>
           <i className="ti ti-x" />
         </button>
+
+        {/* Navigation vers la fiche précédente / suivante */}
+        {fullscreen && hasPrev && (
+          <button onClick={onPrev} title="Lieu précédent" style={{
+            position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+            width: 34, height: 34, background: 'rgba(255,255,255,.9)', backdropFilter: 'blur(10px)',
+            border: '1px solid var(--border)', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: 'var(--text2)', fontSize: 17,
+          }}>
+            <i className="ti ti-chevron-left" />
+          </button>
+        )}
+        {fullscreen && hasNext && (
+          <button onClick={onNext} title="Lieu suivant" style={{
+            position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+            width: 34, height: 34, background: 'rgba(255,255,255,.9)', backdropFilter: 'blur(10px)',
+            border: '1px solid var(--border)', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: 'var(--text2)', fontSize: 17,
+          }}>
+            <i className="ti ti-chevron-right" />
+          </button>
+        )}
       </div>
 
       {/* Corps — dans le même flux scrollable que la photo ci-dessus */}
