@@ -71,17 +71,33 @@ export default function BottomSheet({ children, snapPoints, initial, onSnapChang
       boxShadow: '0 -4px 24px rgba(0,0,0,.14)',
       display: 'flex', flexDirection: 'column',
       transition: dragging ? 'none' : 'height .28s cubic-bezier(.32,.72,0,1)',
+      overscrollBehavior: 'contain',
+      touchAction: 'none',
     }}>
       <div
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        style={{ padding: '10px 0 8px', display: 'flex', justifyContent: 'center', cursor: 'grab', flexShrink: 0, touchAction: 'none' }}
+        onPointerCancel={onPointerUp}
+        style={{
+          padding: '14px 0 14px', display: 'flex', justifyContent: 'center',
+          cursor: dragging ? 'grabbing' : 'grab', flexShrink: 0, touchAction: 'none',
+        }}
       >
-        <div style={{ width: 36, height: 4.5, borderRadius: 3, background: 'rgba(0,0,0,.15)' }} />
+        <div style={{
+          width: 36, height: 4.5, borderRadius: 3,
+          background: dragging ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.15)',
+          transition: 'background .15s',
+        }} />
       </div>
 
-      <div style={{ flex: 1, overflowY: heightPct <= snapPoints[0] ? 'hidden' : 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{
+        flex: 1,
+        overflowY: heightPct <= snapPoints[0] ? 'hidden' : 'auto',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y',
+      }}>
         {children}
       </div>
     </div>

@@ -27,18 +27,31 @@ html, body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none; /* empêche le pull-to-refresh natif du navigateur mobile */
 }
 
 /* ── Leaflet overrides ── */
 .leaflet-container { font-family: var(--font) !important; }
 .leaflet-control-zoom { display: none !important; }
 .leaflet-control-attribution {
-  font-size: 10px !important;
-  background: rgba(255,255,255,.75) !important;
-  backdrop-filter: blur(8px);
-  color: var(--text3) !important;
+  font-size: 9px !important;
+  background: rgba(255,255,255,.6) !important;
+  backdrop-filter: blur(6px);
+  color: rgba(28,28,30,.3) !important;
   border-radius: 6px 0 0 0 !important;
+  padding: 1px 5px !important;
+  line-height: 1.4 !important;
+  max-width: 26px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width .2s ease, color .2s ease;
 }
+.leaflet-control-attribution:hover {
+  max-width: 240px;
+  color: var(--text3) !important;
+  background: rgba(255,255,255,.92) !important;
+}
+.leaflet-control-attribution a { color: inherit !important; }
 /* Fix tuiles fractionnées */
 .leaflet-tile { image-rendering: auto; }
 
