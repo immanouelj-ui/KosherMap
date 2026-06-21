@@ -375,14 +375,24 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
               {reviewError && (
                 <div style={{ fontSize: 12, color: 'var(--red)', marginBottom: 8 }}>{reviewError}</div>
               )}
-              <div style={{ display: 'flex', gap: 4, marginBottom: 10, justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: 2, marginBottom: 10, justifyContent: 'center' }}>
                 {Array.from({ length: 5 }, (_, j) => (
-                  <i
+                  <button
                     key={j}
+                    type="button"
                     onClick={() => setReviewRating(j + 1)}
-                    className={`ti ti-star${j < reviewRating ? '-filled' : ''}`}
-                    style={{ fontSize: 26, color: 'var(--gold)', cursor: 'pointer' }}
-                  />
+                    style={{
+                      width: 40, height: 40, border: 'none', background: 'none',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: 0, WebkitTapHighlightColor: 'transparent',
+                    }}
+                    aria-label={`${j + 1} étoile${j > 0 ? 's' : ''}`}
+                  >
+                    <i
+                      className={`ti ti-star${j < reviewRating ? '-filled' : ''}`}
+                      style={{ fontSize: 26, color: 'var(--gold)', pointerEvents: 'none' }}
+                    />
+                  </button>
                 ))}
               </div>
               <textarea
