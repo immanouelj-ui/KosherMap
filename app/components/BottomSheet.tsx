@@ -80,13 +80,13 @@ export default function BottomSheet({ children, snapPoints, initial, onSnapChang
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         style={{
-          padding: '14px 0 14px', display: 'flex', justifyContent: 'center',
-          cursor: dragging ? 'grabbing' : 'grab', flexShrink: 0, touchAction: 'none',
+          padding: '16px 0', display: 'flex', justifyContent: 'center', alignItems: 'center',
+          minHeight: 44, cursor: dragging ? 'grabbing' : 'grab', flexShrink: 0, touchAction: 'none',
         }}
       >
         <div style={{
-          width: 36, height: 4.5, borderRadius: 3,
-          background: dragging ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.15)',
+          width: 42, height: 5, borderRadius: 3,
+          background: dragging ? 'rgba(0,0,0,.32)' : 'rgba(0,0,0,.16)',
           transition: 'background .15s',
         }} />
       </div>

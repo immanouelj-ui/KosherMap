@@ -103,7 +103,7 @@ export default function Home() {
   function selectPlace(id: string) {
     setSelectedId(id)
     setSortProx(false)
-    if (isMobile) setSheetSnap(2) // ouvre le détail en plein écran sur mobile
+    if (isMobile) setSheetSnap(1) // ouvre le détail à mi-écran sur mobile (l'utilisateur peut le remonter)
   }
 
   function closeDetail() {
@@ -173,7 +173,7 @@ export default function Home() {
         )}
 
         {selected ? (
-          <BottomSheet snapPoints={[0, 0, 100]} initial={2} onSnapChange={i => { if (i === 0) closeDetail() }}>
+          <BottomSheet snapPoints={[6, 50, 92]} initial={sheetSnap} onSnapChange={i => { setSheetSnap(i); if (i === 0) closeDetail() }}>
             <DetailPanel
               place={selected}
               categories={categories}
