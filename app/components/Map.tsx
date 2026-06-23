@@ -3,6 +3,45 @@ import { useEffect, useRef, useState } from 'react'
 import type { Place } from '@/types'
 import { CAT_ICONS } from '@/lib/utils'
 
+// Couleurs par catégorie — palette distinctive pour identifier visuellement
+const CAT_COLORS: Record<string, string> = {
+  restaurant:  '#1FA452', // vert
+  boucherie:   '#E0363B', // rouge
+  boucher:     '#E0363B',
+  epicerie:    '#0A7CFF', // bleu
+  patisserie:  '#E88A00', // orange
+  traiteur:    '#8B5CF6', // violet
+}
+
+function pinHtml(emoji: string, color: string, size: number, selected: boolean): string {
+  const s = size
+  const shadow = selected
+    ? `0 4px 18px ${color}66, 0 0 0 4px ${color}33`
+    : `0 3px 10px rgba(0,0,0,.22)`
+  const scale = selected ? `transform:scale(1.18);` : ''
+  return `
+    <div style="position:relative;width:${s}px;height:${s + s * 0.4}px;${scale}">
+      <div style="
+        position:absolute;top:0;left:0;width:${s}px;height:${s}px;
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        background:${color};
+        box-shadow:${shadow};
+        border:2.5px solid #fff;
+      "></div>
+      <div style="
+        position:absolute;top:${s * 0.12}px;left:${s * 0.12}px;
+        width:${s * 0.76}px;height:${s * 0.76}px;
+        border-radius:50%;
+        background:#fff;
+        display:flex;align-items:center;justify-content:center;
+        font-size:${s * 0.38}px;
+        transform:rotate(45deg);
+      ">${emoji}</div>
+    </div>
+  `
+}
+
 const TILES = {
   plan:      { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',      attr: '© OpenStreetMap © CARTO' },
   satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: '© Esri' },
@@ -62,18 +101,24 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
       tileLayerRef.current = tile
       mapRef.current = map
 
-      // Groupe de clustering : regroupe les marqueurs proches en un seul repère avec compteur,
-      // qui se "dissout" automatiquement au zoom pour révéler les marqueurs individuels.
+      // Groupe de clustering avec design amélioré
       const cluster = (L as any).markerClusterGroup({
-        maxClusterRadius: 55,
+        maxClusterRadius: 50,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
-        disableClusteringAtZoom: 17,
+        disableClusteringAtZoom: 16,
         iconCreateFunction: (c: any) => {
           const count = c.getChildCount()
-          const size = count < 10 ? 38 : count < 50 ? 46 : 54
+          const size = count < 10 ? 36 : count < 50 ? 44 : 52
+          // Couleur dominante selon les catégories dans le cluster
+          const markers = c.getAllChildMarkers()
+          const cats = markers.map((m: any) => m.options.catSlug || '')
+          const catCount: Record<string, number> = {}
+          cats.forEach((cat: string) => { catCount[cat] = (catCount[cat] || 0) + 1 })
+          const dominant = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]?.[0] || ''
+          const color = CAT_COLORS[dominant] || '#B8860B'
           return L.divIcon({
-            html: `<div class="km-cluster" style="width:${size}px;height:${size}px">${count}</div>`,
+            html: `<div class="km-cluster" style="width:${size}px;height:${size}px;background:${color};box-shadow:0 3px 10px ${color}55">${count}</div>`,
             className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
           })
         },
@@ -157,16 +202,17 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
       places.forEach(p => {
         if (p.latitude == null || p.longitude == null) return
         const isSel   = p.id === selectedId
+        const cat     = p._cats[0] || ''
         const hasCert = p._certifications.some(c => c.is_active)
-        const emoji   = CAT_ICONS[p._cats[0]] || '📍'
-        const size    = isSel ? 40 : 32
+        const emoji   = CAT_ICONS[cat] || '📍'
+        const color   = isSel ? '#B8860B' : (hasCert ? (CAT_COLORS[cat] || '#1FA452') : '#9CA3AF')
+        const size    = isSel ? 40 : 34
 
-        const cls = ['km-marker', hasCert ? 'certified' : '', isSel ? 'selected' : ''].filter(Boolean).join(' ')
         const icon = L.divIcon({
-          html: `<div class="${cls}" style="width:${size}px;height:${size}px;font-size:${isSel ? 18 : 15}px">${emoji}</div>`,
+          html: pinHtml(emoji, color, size, isSel),
           className: '',
-          iconSize: [size, size],
-          iconAnchor: [size / 2, size / 2],
+          iconSize:   [size, size * 1.4],
+          iconAnchor: [size / 2, size * 1.4],
         })
 
         if (markersRef.current.has(p.id)) {
@@ -174,7 +220,7 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
           m.setIcon(icon)
           m.setZIndexOffset(isSel ? 1000 : 0)
         } else {
-          const m = L.marker([p.latitude!, p.longitude!], { icon })
+          const m = L.marker([p.latitude!, p.longitude!], { icon, catSlug: cat } as any)
           m.on('click', () => onSelect(p.id))
           clusterRef.current.addLayer(m)
           markersRef.current.set(p.id, m)

@@ -61,42 +61,19 @@ html, body {
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.22); }
 
-/* ── Markers ── */
-.km-marker {
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  border: 2.5px solid #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,.18);
-  transition: transform .15s, box-shadow .15s;
-  font-size: 15px;
-  background: #6b7280;
-}
-.km-marker.certified { background: var(--green); }
-.km-marker.selected {
-  background: var(--gold) !important;
-  border-color: #fff;
-  transform: scale(1.25);
-  box-shadow: 0 4px 16px rgba(184,134,11,.45);
-  font-size: 18px;
-  z-index: 1000 !important;
-}
-
 /* ── Clusters (regroupement au dézoom) ── */
 .km-cluster {
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%;
-  background: var(--gold);
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 13px;
   font-family: var(--font);
   border: 3px solid #fff;
-  box-shadow: 0 3px 10px rgba(184,134,11,.4);
   cursor: pointer;
   transition: transform .15s;
 }
-.km-cluster:hover { transform: scale(1.08); }
+.km-cluster:hover { transform: scale(1.1); }
 
 /* ── User dot ── */
 .user-dot { width:14px; height:14px; border-radius:50%; background:var(--blue); border:2.5px solid #fff; box-shadow:0 0 0 2px rgba(10,124,255,.2); }
