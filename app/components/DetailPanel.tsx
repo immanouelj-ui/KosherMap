@@ -190,19 +190,30 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
         <div style={{ height: fullscreen ? 260 : 200, background: 'var(--bg)', position: 'relative', overflow: 'hidden' }}>
           {placePhotos.length > 0 ? (
             <>
+              {/* Image de fond non cliquable */}
               <img
                 src={getUrl(placePhotos[activePhoto].storage_path)}
                 alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover', userSelect: 'none', pointerEvents: 'none' }}
+              />
+              {/* Zone gauche → photo précédente */}
+              {activePhoto > 0 && (
+                <div
+                  onClick={e => { e.stopPropagation(); setActivePhoto(i => i - 1) }}
+                  style={{ position: 'absolute', left: 0, top: 0, width: '25%', height: '100%', cursor: 'pointer', zIndex: 2 }}
+                />
+              )}
+              {/* Zone droite → photo suivante */}
+              {activePhoto < placePhotos.length - 1 && (
+                <div
+                  onClick={e => { e.stopPropagation(); setActivePhoto(i => i + 1) }}
+                  style={{ position: 'absolute', right: 0, top: 0, width: '25%', height: '100%', cursor: 'pointer', zIndex: 2 }}
+                />
+              )}
+              {/* Zone centrale → ouvrir lightbox */}
+              <div
                 onClick={() => setLightboxOpen(true)}
-                onTouchStart={e => { e.stopPropagation(); (e.currentTarget as any)._tx = e.touches[0].clientX }}
-                onTouchEnd={e => {
-                  e.stopPropagation()
-                  const dx = e.changedTouches[0].clientX - ((e.currentTarget as any)._tx || 0)
-                  if (Math.abs(dx) < 40) { setLightboxOpen(true); return }
-                  if (dx < 0 && activePhoto < placePhotos.length - 1) setActivePhoto(i => i + 1)
-                  if (dx > 0 && activePhoto > 0) setActivePhoto(i => i - 1)
-                }}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in', userSelect: 'none' }}
+                style={{ position: 'absolute', left: '25%', top: 0, width: '50%', height: '100%', cursor: 'zoom-in', zIndex: 2 }}
               />
               {/* Dégradé bas pour lisibilité */}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.1) 0%, transparent 40%, rgba(0,0,0,.5) 100%)' }} />
