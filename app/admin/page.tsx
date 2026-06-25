@@ -4,24 +4,13 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 
 interface Suggestion {
-  id: string
-  created_at: string
-  status: string
-  place_id: string | null
-  suggested_changes: Record<string, any>
-  profiles: { display_name: string | null } | null
+  id: string; created_at: string; status: string; place_id: string | null
+  suggested_changes: Record<string, any>; profiles: { display_name: string | null } | null
 }
-
 interface DeletionRequest {
-  id: string
-  created_at: string
-  status: string
-  target_type: 'place' | 'photo'
-  place_id: string | null
-  photo_id: string | null
-  reason: string | null
-  profiles: { display_name: string | null } | null
-  places: { name: string } | null
+  id: string; created_at: string; status: string; target_type: 'place' | 'photo'
+  place_id: string | null; photo_id: string | null; reason: string | null
+  profiles: { display_name: string | null } | null; places: { name: string } | null
 }
 
 export default function AdminPage() {
@@ -39,52 +28,31 @@ export default function AdminPage() {
   }, [isAdmin])
 
   async function loadDeletions() {
-    const { data } = await supabase
-      .from('deletion_requests')
+    const { data } = await supabase.from('deletion_requests')
       .select('id,created_at,status,target_type,place_id,photo_id,reason,profiles(display_name),places(name)')
-      .order('created_at', { ascending: false })
-      .limit(50)
+      .order('created_at', { ascending: false }).limit(50)
     setDeletions((data as any) || [])
   }
 
   async function updateDeletion(id: string, status: 'approved' | 'rejected') {
     setBusy(true)
     await supabase.from('deletion_requests').update({ status }).eq('id', id)
-    await loadDeletions()
-    await loadPlaces()
+    await loadDeletions(); await loadPlaces()
     setBusy(false)
   }
 
   async function loadSuggestions() {
-    const { data } = await supabase
-      .from('place_suggestions')
+    const { data } = await supabase.from('place_suggestions')
       .select('id,created_at,status,place_id,suggested_changes,profiles(display_name)')
-      .order('created_at', { ascending: false })
-      .limit(50)
+      .order('created_at', { ascending: false }).limit(50)
     setSuggestions((data as any) || [])
   }
 
   async function loadPlaces() {
-    const { data } = await supabase
-      .from('places')
-      .select('id,name,city,address,phone,website,description,status,is_deleted,avg_rating,review_count,place_categories(category_id,categories(slug,name))')
+    const { data } = await supabase.from('places')
+      .select('id,name,city,address,phone,website,description,status,is_deleted,avg_rating,review_count,location,place_categories(category_id,categories(slug,name))')
       .order('name')
     setPlaces(data || [])
-  }
-
-  async function saveEdit(id: string, fields: Record<string, string>) {
-    setBusy(true)
-    await supabase.from('places').update({
-      name: fields.name,
-      city: fields.city,
-      address: fields.address,
-      phone: fields.phone,
-      website: fields.website,
-      description: fields.description,
-    }).eq('id', id)
-    setBusy(false)
-    setEditingPlace(null)
-    await loadPlaces()
   }
 
   async function updateSuggestion(id: string, status: 'approved' | 'rejected') {
@@ -102,28 +70,8 @@ export default function AdminPage() {
   }
 
   if (loading) return <Loading />
-
-  if (!session) return (
-    <Center>
-      <div style={{ textAlign: 'center' }}>
-        <i className="ti ti-lock" style={{ fontSize: 48, color: 'var(--gold)', display: 'block', marginBottom: 12 }} />
-        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Connexion requise</div>
-        <div style={{ fontSize: 13, color: 'var(--text2)' }}>Connectez-vous pour accéder à l'administration.</div>
-        <a href="/" style={{ display: 'inline-block', marginTop: 16, color: 'var(--gold)', fontSize: 13 }}>← Retour</a>
-      </div>
-    </Center>
-  )
-
-  if (!isAdmin) return (
-    <Center>
-      <div style={{ textAlign: 'center' }}>
-        <i className="ti ti-shield-off" style={{ fontSize: 48, color: 'var(--red)', display: 'block', marginBottom: 12 }} />
-        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Accès refusé</div>
-        <div style={{ fontSize: 13, color: 'var(--text2)' }}>Votre compte n'a pas les droits administrateur.</div>
-        <a href="/" style={{ display: 'inline-block', marginTop: 16, color: 'var(--gold)', fontSize: 13 }}>← Retour</a>
-      </div>
-    </Center>
-  )
+  if (!session) return <Center><AccessDenied icon="ti-lock" msg="Connectez-vous pour accéder à l'administration." /></Center>
+  if (!isAdmin) return <Center><AccessDenied icon="ti-shield-off" msg="Votre compte n'a pas les droits administrateur." red /></Center>
 
   const pending = suggestions.filter(s => s.status === 'pending')
   const pendingDeletions = deletions.filter(d => d.status === 'pending')
@@ -131,11 +79,7 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font)' }}>
-      {/* Header */}
-      <header style={{
-        background: '#fff', borderBottom: '1px solid var(--border)',
-        padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', gap: 16,
-      }}>
+      <header style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', gap: 16 }}>
         <a href="/" style={{ color: 'var(--text3)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
           <i className="ti ti-arrow-left" /> Retour
         </a>
@@ -150,8 +94,7 @@ export default function AdminPage() {
         )}
       </header>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 20px' }}>
-        {/* Tabs */}
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px' }}>
         <div style={{ display: 'flex', gap: 4, background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
           {(['suggestions', 'deletions', 'places'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
@@ -160,25 +103,17 @@ export default function AdminPage() {
               background: tab === t ? 'var(--gold)' : 'transparent',
               color: tab === t ? '#fff' : 'var(--text2)',
             }}>
-              {t === 'suggestions' ? `Suggestions (${pending.length})`
-                : t === 'deletions' ? `Suppressions (${pendingDeletions.length})`
-                : `Lieux (${places.length})`}
+              {t === 'suggestions' ? `Suggestions (${pending.length})` : t === 'deletions' ? `Suppressions (${pendingDeletions.length})` : `Lieux (${places.length})`}
             </button>
           ))}
         </div>
 
-        {/* Suggestions */}
+        {/* ── Suggestions ── */}
         {tab === 'suggestions' && (
           <div>
-            {suggestions.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 48, color: 'var(--text3)', fontSize: 14 }}>Aucune suggestion.</div>
-            )}
+            {suggestions.length === 0 && <Empty msg="Aucune suggestion." />}
             {suggestions.map(s => (
-              <div key={s.id} style={{
-                background: '#fff', border: '1px solid var(--border)', borderRadius: 12,
-                padding: '16px 18px', marginBottom: 10,
-                borderLeft: `4px solid ${s.status === 'pending' ? 'var(--gold)' : s.status === 'approved' ? 'var(--green)' : 'var(--red)'}`,
-              }}>
+              <div key={s.id} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', marginBottom: 10, borderLeft: `4px solid ${s.status === 'pending' ? 'var(--gold)' : s.status === 'approved' ? 'var(--green)' : 'var(--red)'}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
@@ -187,36 +122,17 @@ export default function AdminPage() {
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text2)', display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                       {s.suggested_changes?.city && <span><i className="ti ti-map-pin" /> {s.suggested_changes.city}</span>}
-                      {s.suggested_changes?.category && <span><i className="ti ti-tag" /> {s.suggested_changes.category}</span>}
-                      {s.suggested_changes?.cert_authority && <span><i className="ti ti-shield-check" /> {s.suggested_changes.cert_authority}</span>}
                       {s.profiles?.display_name && <span><i className="ti ti-user" /> {s.profiles.display_name}</span>}
                       <span><i className="ti ti-clock" /> {new Date(s.created_at).toLocaleDateString('fr-FR')}</span>
                     </div>
-                    {s.suggested_changes?.description && (
-                      <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text2)', fontStyle: 'italic', lineHeight: 1.5 }}>
-                        "{s.suggested_changes.description}"
-                      </div>
-                    )}
                   </div>
-                  {s.status === 'pending' && (
+                  {s.status === 'pending' ? (
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => updateSuggestion(s.id, 'approved')} disabled={busy} style={{ ...actionBtn, background: 'var(--green)', color: '#fff' }}>
-                        <i className="ti ti-check" /> Valider
-                      </button>
-                      <button onClick={() => updateSuggestion(s.id, 'rejected')} disabled={busy} style={{ ...actionBtn, background: 'var(--bg)', color: 'var(--red)', border: '1px solid rgba(224,54,59,.3)' }}>
-                        <i className="ti ti-x" /> Refuser
-                      </button>
+                      <button onClick={() => updateSuggestion(s.id, 'approved')} disabled={busy} style={{ ...actionBtn, background: 'var(--green)', color: '#fff' }}><i className="ti ti-check" /> Valider</button>
+                      <button onClick={() => updateSuggestion(s.id, 'rejected')} disabled={busy} style={{ ...actionBtn, background: 'var(--bg)', color: 'var(--red)', border: '1px solid rgba(224,54,59,.3)' }}><i className="ti ti-x" /> Refuser</button>
                     </div>
-                  )}
-                  {s.status !== 'pending' && (
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 8,
-                      background: s.status === 'approved' ? 'rgba(31,164,82,.1)' : 'rgba(224,54,59,.08)',
-                      color: s.status === 'approved' ? 'var(--green)' : 'var(--red)',
-                      flexShrink: 0,
-                    }}>
-                      {s.status === 'approved' ? 'Validé' : 'Refusé'}
-                    </span>
+                  ) : (
+                    <StatusBadge ok={s.status === 'approved'} />
                   )}
                 </div>
               </div>
@@ -224,23 +140,17 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Suppressions */}
+        {/* ── Suppressions ── */}
         {tab === 'deletions' && (
           <div>
-            {deletions.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 48, color: 'var(--text3)', fontSize: 14 }}>Aucune demande de suppression.</div>
-            )}
+            {deletions.length === 0 && <Empty msg="Aucune demande de suppression." />}
             {deletions.map(d => (
-              <div key={d.id} style={{
-                background: '#fff', border: '1px solid var(--border)', borderRadius: 12,
-                padding: '16px 18px', marginBottom: 10,
-                borderLeft: `4px solid ${d.status === 'pending' ? 'var(--gold)' : d.status === 'approved' ? 'var(--green)' : 'var(--red)'}`,
-              }}>
+              <div key={d.id} style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', marginBottom: 10, borderLeft: `4px solid ${d.status === 'pending' ? 'var(--gold)' : d.status === 'approved' ? 'var(--green)' : 'var(--red)'}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <i className={`ti ${d.target_type === 'place' ? 'ti-building-store' : 'ti-photo'}`} style={{ color: 'var(--red)' }} />
-                      {d.target_type === 'place' ? `Suppression de fiche : ${d.places?.name || '–'}` : 'Suppression de photo'}
+                      {d.target_type === 'place' ? `Suppression : ${d.places?.name || '–'}` : 'Suppression de photo'}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text2)', display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                       {d.profiles?.display_name && <span><i className="ti ti-user" /> {d.profiles.display_name}</span>}
@@ -250,22 +160,11 @@ export default function AdminPage() {
                   </div>
                   {d.status === 'pending' ? (
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => updateDeletion(d.id, 'approved')} disabled={busy} style={{ ...actionBtn, background: 'var(--red)', color: '#fff' }}>
-                        <i className="ti ti-trash" /> Confirmer
-                      </button>
-                      <button onClick={() => updateDeletion(d.id, 'rejected')} disabled={busy} style={{ ...actionBtn, background: 'var(--bg)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
-                        <i className="ti ti-x" /> Refuser
-                      </button>
+                      <button onClick={() => updateDeletion(d.id, 'approved')} disabled={busy} style={{ ...actionBtn, background: 'var(--red)', color: '#fff' }}><i className="ti ti-trash" /> Confirmer</button>
+                      <button onClick={() => updateDeletion(d.id, 'rejected')} disabled={busy} style={{ ...actionBtn, background: 'var(--bg)', color: 'var(--text2)', border: '1px solid var(--border)' }}><i className="ti ti-x" /> Refuser</button>
                     </div>
                   ) : (
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 8,
-                      background: d.status === 'approved' ? 'rgba(224,54,59,.08)' : 'rgba(31,164,82,.08)',
-                      color: d.status === 'approved' ? 'var(--red)' : 'var(--green)',
-                      flexShrink: 0,
-                    }}>
-                      {d.status === 'approved' ? 'Supprimé' : 'Refusé'}
-                    </span>
+                    <StatusBadge ok={d.status !== 'approved'} labelOk="Refusé" labelNo="Supprimé" />
                   )}
                 </div>
               </div>
@@ -273,66 +172,51 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Lieux */}
+        {/* ── Lieux ── */}
         {tab === 'places' && (
           <div>
-            {/* Barre de recherche */}
             <div style={{ position: 'relative', marginBottom: 14, maxWidth: 360 }}>
               <i className="ti ti-search" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 15 }} />
-              <input
-                type="search"
-                value={placeSearch}
-                onChange={e => setPlaceSearch(e.target.value)}
-                placeholder="Rechercher un lieu, une ville…"
-                style={{
-                  width: '100%', height: 38, border: '1px solid var(--border)', borderRadius: 8,
-                  padding: '0 12px 0 36px', fontSize: 13, fontFamily: 'var(--font)', outline: 'none',
-                }}
-              />
+              <input type="search" value={placeSearch} onChange={e => setPlaceSearch(e.target.value)} placeholder="Rechercher un lieu, une ville…"
+                style={{ width: '100%', height: 38, border: '1px solid var(--border)', borderRadius: 8, padding: '0 12px 0 36px', fontSize: 13, fontFamily: 'var(--font)', outline: 'none' }} />
             </div>
-
             <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                    {['Nom', 'Ville', 'Note', 'Avis', 'Statut'].map(h => (
+                    {['Nom', 'Ville', 'Tél', 'GPS', 'Statut'].map(h => (
                       <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 11.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{h}</th>
                     ))}
                     <th />
                   </tr>
                 </thead>
                 <tbody>
-                  {places
-                    .filter(p => {
-                      const q = placeSearch.toLowerCase().trim()
-                      if (!q) return true
-                      return p.name?.toLowerCase().includes(q) || p.city?.toLowerCase().includes(q)
-                    })
-                    .map((p, i, arr) => (
-                    <tr
-                      key={p.id}
-                      onClick={() => setEditingPlace(p)}
+                  {places.filter(p => {
+                    const q = placeSearch.toLowerCase().trim()
+                    return !q || p.name?.toLowerCase().includes(q) || p.city?.toLowerCase().includes(q)
+                  }).map((p, i, arr) => (
+                    <tr key={p.id} onClick={() => setEditingPlace(p)}
                       style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none', opacity: p.is_deleted ? 0.4 : 1, cursor: 'pointer' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
                       <td style={{ padding: '10px 14px', fontWeight: 600 }}>{p.name}</td>
                       <td style={{ padding: '10px 14px', color: 'var(--text2)' }}>{p.city || '–'}</td>
-                      <td style={{ padding: '10px 14px', color: 'var(--text2)' }}>{p.avg_rating ? Number(p.avg_rating).toFixed(1) : '–'}</td>
-                      <td style={{ padding: '10px 14px', color: 'var(--text2)' }}>{p.review_count || 0}</td>
+                      <td style={{ padding: '10px 14px', color: p.phone ? 'var(--text2)' : 'var(--text3)', fontSize: 12 }}>{p.phone || '—'}</td>
                       <td style={{ padding: '10px 14px' }}>
-                        <span style={{
-                          fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 8,
-                          background: p.is_deleted ? 'rgba(224,54,59,.08)' : 'rgba(31,164,82,.08)',
-                          color: p.is_deleted ? 'var(--red)' : 'var(--green)',
-                        }}>
+                        {p.location
+                          ? <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>✓ GPS</span>
+                          : <span style={{ fontSize: 11, color: 'var(--red)', fontWeight: 600 }}>✗ Manquant</span>
+                        }
+                      </td>
+                      <td style={{ padding: '10px 14px' }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 8, background: p.is_deleted ? 'rgba(224,54,59,.08)' : 'rgba(31,164,82,.08)', color: p.is_deleted ? 'var(--red)' : 'var(--green)' }}>
                           {p.is_deleted ? 'Supprimé' : 'Actif'}
                         </span>
                       </td>
                       <td style={{ padding: '10px 14px', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
-                        <button onClick={() => togglePlace(p.id, p.is_deleted)} disabled={busy} style={{
-                          ...actionBtn, background: 'var(--bg)', color: 'var(--text2)', border: '1px solid var(--border)',
-                        }}>
+                        <button onClick={() => togglePlace(p.id, p.is_deleted)} disabled={busy}
+                          style={{ ...actionBtn, background: 'var(--bg)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
                           {p.is_deleted ? 'Restaurer' : 'Masquer'}
                         </button>
                       </td>
@@ -345,65 +229,289 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Modale édition lieu */}
       {editingPlace && (
-        <EditPlaceModal
-          place={editingPlace}
-          onClose={() => setEditingPlace(null)}
-          onSave={saveEdit}
-          busy={busy}
-        />
+        <EditPlaceModal place={editingPlace} onClose={() => { setEditingPlace(null); loadPlaces() }} />
       )}
     </div>
   )
 }
 
-function EditPlaceModal({ place, onClose, onSave, busy }: { place: any; onClose: () => void; onSave: (id: string, f: Record<string,string>) => void; busy: boolean }) {
+/* ══════════════════════════════════════════════════════
+   Modale d'édition — 3 onglets : Infos / Photos / GPS
+══════════════════════════════════════════════════════ */
+function EditPlaceModal({ place, onClose }: { place: any; onClose: () => void }) {
+  const [tab, setTab] = useState<'infos' | 'photos' | 'gps'>('infos')
+  const [busy, setBusy] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  // ── Infos ──
   const [f, setF] = useState({
     name: place.name || '', city: place.city || '', address: place.address || '',
     phone: place.phone || '', website: place.website || '', description: place.description || '',
   })
-  const set = (k: string, v: string) => setF(p => ({ ...p, [k]: v }))
+
+  async function saveInfos() {
+    setBusy(true)
+    await supabase.from('places').update({
+      name: f.name, city: f.city, address: f.address,
+      phone: f.phone, website: f.website, description: f.description,
+    }).eq('id', place.id)
+    setBusy(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
+  }
+
+  // ── Photos ──
+  const [photos, setPhotos] = useState<any[]>([])
+  const [photosLoading, setPhotosLoading] = useState(false)
+
+  async function loadPhotos() {
+    setPhotosLoading(true)
+    const { data } = await supabase.from('photos').select('id,storage_path,is_primary').eq('place_id', place.id).order('is_primary', { ascending: false })
+    if (data && data.length > 0) { setPhotos(data); setPhotosLoading(false); return }
+    // Fallback Storage
+    const { data: files } = await supabase.storage.from('photos').list(`places/${place.id}`, { limit: 10, sortBy: { column: 'name', order: 'asc' } })
+    if (files) {
+      setPhotos(files.filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f.name)).map((f, i) => ({
+        id: f.id || `${place.id}-${i}`, storage_path: `places/${place.id}/${f.name}`, is_primary: f.name === 'cover.jpg',
+      })))
+    }
+    setPhotosLoading(false)
+  }
+
+  async function deletePhoto(photo: any) {
+    setBusy(true)
+    await supabase.from('photos').delete().eq('id', photo.id)
+    await supabase.storage.from('photos').remove([photo.storage_path])
+    await loadPhotos()
+    setBusy(false)
+  }
+
+  async function setPrimary(photo: any) {
+    setBusy(true)
+    await supabase.from('photos').update({ is_primary: false }).eq('place_id', place.id)
+    await supabase.from('photos').update({ is_primary: true }).eq('id', photo.id)
+    await loadPhotos()
+    setBusy(false)
+  }
+
+  // ── GPS ──
+  const parseLocation = () => {
+    if (!place.location) return { lat: '', lng: '' }
+    const m = place.location.match(/POINT\(([^ ]+) ([^ )]+)\)/)
+    return m ? { lat: m[2], lng: m[1] } : { lat: '', lng: '' }
+  }
+  const initial = parseLocation()
+  const [lat, setLat] = useState(initial.lat)
+  const [lng, setLng] = useState(initial.lng)
+  const [geocoding, setGeocoding] = useState(false)
+  const [geocodeResult, setGeocodeResult] = useState<string | null>(null)
+
+  async function geocodeAddress() {
+    const addr = [f.address, f.city, 'France'].filter(Boolean).join(', ')
+    setGeocoding(true); setGeocodeResult(null)
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1`)
+      const data = await res.json()
+      if (data[0]) {
+        setLat(String(parseFloat(data[0].lat).toFixed(6)))
+        setLng(String(parseFloat(data[0].lon).toFixed(6)))
+        setGeocodeResult(`Trouvé : ${data[0].display_name}`)
+      } else {
+        setGeocodeResult('Adresse introuvable')
+      }
+    } catch { setGeocodeResult('Erreur réseau') }
+    setGeocoding(false)
+  }
+
+  async function saveGPS() {
+    if (!lat || !lng) return
+    setBusy(true)
+    await supabase.from('places').update({ location: `SRID=4326;POINT(${lng} ${lat})` }).eq('id', place.id)
+    setBusy(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
+  }
+
+  useEffect(() => { if (tab === 'photos') loadPhotos() }, [tab])
+
+  function getUrl(path: string) {
+    const { data } = supabase.storage.from('photos').getPublicUrl(path)
+    return data.publicUrl
+  }
+
+  const TABS = [
+    { id: 'infos', label: 'Infos', icon: 'ti-edit' },
+    { id: 'photos', label: 'Photos', icon: 'ti-photo' },
+    { id: 'gps', label: 'Localisation', icon: 'ti-map-pin' },
+  ] as const
 
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose() }} style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', backdropFilter: 'blur(6px)',
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(6px)',
       zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
     }}>
-      <div style={{
-        background: '#fff', borderRadius: 16, width: '100%', maxWidth: 480,
-        maxHeight: '88vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 12px 40px rgba(0,0,0,.18)',
-      }}>
-        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>Modifier la fiche</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text3)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 560, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 16px 50px rgba(0,0,0,.2)' }}>
+
+        {/* Header */}
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{place.name}</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{[place.address, place.city].filter(Boolean).join(', ')}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text3)', padding: 4 }}>
             <i className="ti ti-x" />
           </button>
         </div>
 
-        <div style={{ padding: '18px 20px', overflowY: 'auto', flex: 1 }}>
-          <EField label="Nom"><input value={f.name} onChange={e => set('name', e.target.value)} style={efInput} /></EField>
-          <EField label="Ville"><input value={f.city} onChange={e => set('city', e.target.value)} style={efInput} /></EField>
-          <EField label="Adresse"><input value={f.address} onChange={e => set('address', e.target.value)} style={efInput} /></EField>
-          <EField label="Téléphone"><input value={f.phone} onChange={e => set('phone', e.target.value)} style={efInput} /></EField>
-          <EField label="Site web"><input value={f.website} onChange={e => set('website', e.target.value)} style={efInput} /></EField>
-          <EField label="Description">
-            <textarea value={f.description} onChange={e => set('description', e.target.value)} style={{ ...efInput, height: 80, resize: 'none', padding: '10px 12px' }} />
-          </EField>
+        {/* Tabs */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', padding: '0 20px', gap: 0 }}>
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
+              height: 44, padding: '0 16px', border: 'none', background: 'none', cursor: 'pointer',
+              fontSize: 13, fontWeight: 600, fontFamily: 'var(--font)',
+              color: tab === t.id ? 'var(--gold)' : 'var(--text2)',
+              borderBottom: tab === t.id ? '2px solid var(--gold)' : '2px solid transparent',
+              display: 'flex', alignItems: 'center', gap: 6, transition: 'color .15s',
+            }}>
+              <i className={`ti ${t.icon}`} style={{ fontSize: 15 }} />{t.label}
+            </button>
+          ))}
         </div>
 
-        <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
-          <button onClick={onClose} style={{ ...actionBtn, height: 38, flex: '0 0 auto', padding: '0 18px', background: 'var(--bg)', color: 'var(--text2)', border: '1px solid var(--border)' }}>Annuler</button>
-          <button onClick={() => onSave(place.id, f)} disabled={busy} style={{ ...actionBtn, height: 38, flex: 1, background: 'var(--gold)', color: '#fff' }}>
-            {busy ? 'Enregistrement…' : 'Enregistrer'}
+        {/* Content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+
+          {/* ── Onglet Infos ── */}
+          {tab === 'infos' && (
+            <div>
+              <EField label="Nom"><input value={f.name} onChange={e => setF(p => ({ ...p, name: e.target.value }))} style={efInput} /></EField>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <EField label="Ville"><input value={f.city} onChange={e => setF(p => ({ ...p, city: e.target.value }))} style={efInput} /></EField>
+                <EField label="Téléphone"><input value={f.phone} onChange={e => setF(p => ({ ...p, phone: e.target.value }))} style={efInput} /></EField>
+              </div>
+              <EField label="Adresse"><input value={f.address} onChange={e => setF(p => ({ ...p, address: e.target.value }))} style={efInput} /></EField>
+              <EField label="Site web"><input value={f.website} onChange={e => setF(p => ({ ...p, website: e.target.value }))} style={efInput} /></EField>
+              <EField label="Description">
+                <textarea value={f.description} onChange={e => setF(p => ({ ...p, description: e.target.value }))} style={{ ...efInput, height: 80, resize: 'none', padding: '10px 12px' }} />
+              </EField>
+            </div>
+          )}
+
+          {/* ── Onglet Photos ── */}
+          {tab === 'photos' && (
+            <div>
+              {photosLoading && <div style={{ textAlign: 'center', color: 'var(--text3)', padding: 32 }}>Chargement…</div>}
+              {!photosLoading && photos.length === 0 && (
+                <div style={{ textAlign: 'center', color: 'var(--text3)', padding: 32 }}>
+                  <i className="ti ti-photo-off" style={{ fontSize: 36, display: 'block', marginBottom: 8, opacity: .3 }} />
+                  Aucune photo enregistrée
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+                {photos.map(ph => (
+                  <div key={ph.id} style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: ph.is_primary ? '2.5px solid var(--gold)' : '1px solid var(--border)', aspectRatio: '4/3' }}>
+                    <img src={getUrl(ph.storage_path)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {ph.is_primary && (
+                      <div style={{ position: 'absolute', top: 6, left: 6, background: 'var(--gold)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 8 }}>
+                        Principale
+                      </div>
+                    )}
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px', display: 'flex', gap: 4, background: 'linear-gradient(transparent, rgba(0,0,0,.6))' }}>
+                      {!ph.is_primary && (
+                        <button onClick={() => setPrimary(ph)} disabled={busy} title="Définir comme principale"
+                          style={{ flex: 1, height: 26, borderRadius: 6, border: 'none', background: 'rgba(255,255,255,.25)', backdropFilter: 'blur(4px)', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                          <i className="ti ti-star" />
+                        </button>
+                      )}
+                      <button onClick={() => deletePhoto(ph)} disabled={busy} title="Supprimer"
+                        style={{ flex: 1, height: 26, borderRadius: 6, border: 'none', background: 'rgba(224,54,59,.7)', backdropFilter: 'blur(4px)', color: '#fff', fontSize: 11, cursor: 'pointer' }}>
+                        <i className="ti ti-trash" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Onglet GPS ── */}
+          {tab === 'gps' && (
+            <div>
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.5px' }}>Coordonnées actuelles</div>
+                {place.location ? (
+                  <div style={{ fontSize: 13, fontFamily: 'monospace', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <i className="ti ti-map-pin-check" style={{ color: 'var(--green)', fontSize: 16 }} />
+                    lat {parseLocation().lat} / lng {parseLocation().lng}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 13, color: 'var(--red)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <i className="ti ti-map-pin-off" style={{ fontSize: 16 }} /> Localisation manquante
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>
+                  Géocoder depuis l'adresse
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 10 }}>
+                  Adresse : <strong>{[f.address, f.city].filter(Boolean).join(', ') || '(non renseignée)'}</strong>
+                </div>
+                <button onClick={geocodeAddress} disabled={geocoding || busy}
+                  style={{ ...actionBtn, height: 36, padding: '0 16px', background: '#0A7CFF', color: '#fff' }}>
+                  <i className="ti ti-wand" /> {geocoding ? 'Recherche…' : 'Géocoder automatiquement'}
+                </button>
+                {geocodeResult && (
+                  <div style={{ marginTop: 10, fontSize: 12, color: geocodeResult.startsWith('Trouvé') ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
+                    {geocodeResult}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+                <EField label="Latitude">
+                  <input value={lat} onChange={e => setLat(e.target.value)} placeholder="48.8566" style={efInput} />
+                </EField>
+                <EField label="Longitude">
+                  <input value={lng} onChange={e => setLng(e.target.value)} placeholder="2.3522" style={efInput} />
+                </EField>
+              </div>
+
+              {lat && lng && (
+                <a
+                  href={`https://www.google.com/maps?q=${lat},${lng}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#0A7CFF', marginBottom: 14, textDecoration: 'none' }}
+                >
+                  <i className="ti ti-external-link" /> Vérifier sur Google Maps
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 8, alignItems: 'center' }}>
+          {saved && <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600 }}><i className="ti ti-circle-check" /> Enregistré</span>}
+          <div style={{ flex: 1 }} />
+          <button onClick={onClose} style={{ ...actionBtn, height: 38, padding: '0 18px', background: 'var(--bg)', color: 'var(--text2)', border: '1px solid var(--border)' }}>
+            Fermer
           </button>
+          {tab === 'infos' && (
+            <button onClick={saveInfos} disabled={busy} style={{ ...actionBtn, height: 38, padding: '0 20px', background: 'var(--gold)', color: '#fff' }}>
+              {busy ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+          )}
+          {tab === 'gps' && (
+            <button onClick={saveGPS} disabled={busy || !lat || !lng} style={{ ...actionBtn, height: 38, padding: '0 20px', background: 'var(--gold)', color: '#fff' }}>
+              {busy ? 'Enregistrement…' : 'Enregistrer GPS'}
+            </button>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
+/* ── Helpers ── */
 function EField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 13 }}>
@@ -413,31 +521,44 @@ function EField({ label, children }: { label: string; children: React.ReactNode 
   )
 }
 
+function Empty({ msg }: { msg: string }) {
+  return <div style={{ textAlign: 'center', padding: 48, color: 'var(--text3)', fontSize: 14 }}>{msg}</div>
+}
+
+function StatusBadge({ ok, labelOk = 'Validé', labelNo = 'Refusé' }: { ok: boolean; labelOk?: string; labelNo?: string }) {
+  return (
+    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 8, flexShrink: 0, background: ok ? 'rgba(31,164,82,.1)' : 'rgba(224,54,59,.08)', color: ok ? 'var(--green)' : 'var(--red)' }}>
+      {ok ? labelOk : labelNo}
+    </span>
+  )
+}
+
+function AccessDenied({ icon, msg, red }: { icon: string; msg: string; red?: boolean }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <i className={`ti ${icon}`} style={{ fontSize: 48, color: red ? 'var(--red)' : 'var(--gold)', display: 'block', marginBottom: 12 }} />
+      <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{red ? 'Accès refusé' : 'Connexion requise'}</div>
+      <div style={{ fontSize: 13, color: 'var(--text2)' }}>{msg}</div>
+      <a href="/" style={{ display: 'inline-block', marginTop: 16, color: 'var(--gold)', fontSize: 13 }}>← Retour</a>
+    </div>
+  )
+}
+
+function Loading() {
+  return <Center><div style={{ display: 'flex', gap: 6 }}><span className="dot" /><span className="dot" /><span className="dot" /></div></Center>
+}
+
+function Center({ children }: { children: React.ReactNode }) {
+  return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font)' }}>{children}</div>
+}
+
 const efInput: React.CSSProperties = {
   width: '100%', height: 38, background: 'var(--bg)', border: '1px solid var(--border)',
   borderRadius: 8, padding: '0 12px', fontSize: 13, fontFamily: 'var(--font)', outline: 'none',
 }
 
-function Loading() {
-  return (
-    <Center>
-      <div style={{ display: 'flex', gap: 6 }}>
-        <span className="dot" /><span className="dot" /><span className="dot" />
-      </div>
-    </Center>
-  )
-}
-
-function Center({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font)' }}>
-      {children}
-    </div>
-  )
-}
-
 const actionBtn: React.CSSProperties = {
   height: 30, padding: '0 12px', borderRadius: 7, fontSize: 12, fontWeight: 600,
-  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, border: 'none',
+  cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, border: 'none',
   fontFamily: 'var(--font)', transition: 'all .15s', whiteSpace: 'nowrap',
 }
