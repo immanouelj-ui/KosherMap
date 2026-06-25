@@ -53,26 +53,44 @@ export default function CategoryChipsMobile({
         </div>
       </div>
 
+      {/* Overlay pour fermer en cliquant dehors */}
+      {filtersOpen && (
+        <div
+          onClick={() => setFiltersOpen(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 688, background: 'transparent' }}
+        />
+      )}
+
       {/* Filtres panel */}
       {filtersOpen && (
-        <div style={{
-          margin: '0 10px',
-          background: '#fff',
-          borderRadius: 14,
-          boxShadow: '0 4px 20px rgba(0,0,0,.13)',
-          padding: '12px 14px',
-          display: 'flex', flexDirection: 'column', gap: 10,
-        }}>
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            margin: '0 10px', position: 'relative', zIndex: 689,
+            background: '#fff',
+            borderRadius: 14,
+            boxShadow: '0 4px 20px rgba(0,0,0,.18)',
+            padding: '12px 14px',
+            display: 'flex', flexDirection: 'column', gap: 10,
+          }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Filtres</span>
-            {activeFiltersCount > 0 && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={() => { onFilterOpenNow(false); onFilterCertType(null); onFilterCertAuth(null) }}
+                  style={{ border: 'none', background: 'none', fontSize: 11.5, color: 'var(--gold)', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                >
+                  Tout effacer
+                </button>
+              )}
               <button
-                onClick={() => { onFilterOpenNow(false); onFilterCertType(null); onFilterCertAuth(null) }}
-                style={{ border: 'none', background: 'none', fontSize: 11.5, color: 'var(--gold)', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                onClick={() => setFiltersOpen(false)}
+                style={{ border: 'none', background: 'rgba(0,0,0,.06)', borderRadius: '50%', width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: 'var(--text2)', padding: 0 }}
               >
-                Tout effacer
+                <i className="ti ti-x" />
               </button>
-            )}
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
