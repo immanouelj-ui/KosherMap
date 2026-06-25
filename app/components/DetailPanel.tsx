@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Place, Category } from '@/types'
 import { CAT_ICONS, DAYS, isOpenNow, formatDistance } from '@/lib/utils'
+import PhotoLightbox from './PhotoLightbox'
 
 const CAT_COLORS: Record<string, string> = {
   restaurant: '#1FA452', boucherie: '#E0363B', boucher: '#E0363B',
@@ -30,6 +31,7 @@ interface Props {
 export default function DetailPanel({ place: p, categories, session, profile, fullscreen, onClose, onEdit, onShare, onAuthRequired, onPrev, onNext, hasPrev, hasNext }: Props) {
   const [placePhotos, setPlacePhotos] = useState<PlacePhoto[]>([])
   const [activePhoto, setActivePhoto] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const [confirmDeletePlace, setConfirmDeletePlace] = useState(false)
   const [deleteSent, setDeleteSent] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -48,6 +50,7 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
     setActivePhoto(0)
     setConfirmDeletePlace(false)
     setDeleteSent(false)
+    setLightboxOpen(false)
     setReviews(p._reviews || [])
     setShowReviewForm(false)
     setReviewRating(5)
@@ -169,7 +172,8 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
               <img
                 src={getUrl(placePhotos[activePhoto].storage_path)}
                 alt=""
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onClick={() => setLightboxOpen(true)}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in' }}
               />
               {/* Dégradé bas pour lisibilité */}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.1) 0%, transparent 40%, rgba(0,0,0,.5) 100%)' }} />
@@ -507,6 +511,14 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
           <div style={{ height: 16 }} />
         </div>
       </div>
+      {lightboxOpen && placePhotos.length > 0 && (
+        <PhotoLightbox
+          photos={placePhotos.map(ph => getUrl(ph.storage_path))}
+          currentIndex={activePhoto}
+          onIndexChange={i => { setActivePhoto(i) }}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </aside>
   )
 }

@@ -14,6 +14,7 @@ import { Toast, toast }    from './components/Toast'
 import { usePlaces }       from '@/hooks/usePlaces'
 import { useAuth }         from '@/hooks/useAuth'
 import { useIsMobile }     from '@/hooks/useIsMobile'
+import { isOpenNow }       from '@/lib/utils'
 import type { Place }      from '@/types'
 import type { TileStyle }  from './components/Map'
 
@@ -24,15 +25,28 @@ export default function Home() {
   const { session, profile, isAdmin, signIn, signUp, signOut }   = useAuth()
   const { isMobile, ready } = useIsMobile()
 
-  const [query, setQuery]           = useState('')
-  const [filter, setFilter]         = useState('all')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [userLoc, setUserLoc]       = useState<{ lat: number; lng: number } | null>(null)
-  const [tileStyle, setTile]        = useState<TileStyle>('plan')
-  const [authOpen, setAuthOpen]     = useState(false)
-  const [addOpen, setAddOpen]       = useState(false)
-  const [pending, setPending]       = useState<'add' | 'edit' | null>(null)
-  const [sheetSnap, setSheetSnap]   = useState(1)
+  const [query, setQuery]               = useState('')
+  const [filter, setFilter]             = useState('all')
+  const [filterOpenNow, setFilterOpenNow] = useState(false)
+  const [filterCertType, setFilterCertType] = useState<string | null>(null) // 'lait' | 'viande'
+  const [filterCertAuth, setFilterCertAuth] = useState<string | null>(null)
+  const [selectedId, setSelectedId]     = useState<string | null>(null)
+  const [userLoc, setUserLoc]           = useState<{ lat: number; lng: number } | null>(null)
+  const [tileStyle, setTile]            = useState<TileStyle>('plan')
+  const [authOpen, setAuthOpen]         = useState(false)
+  const [addOpen, setAddOpen]           = useState(false)
+  const [pending, setPending]           = useState<'add' | 'edit' | null>(null)
+  const [sheetSnap, setSheetSnap]       = useState(1)
+
+  // Liste dédupliquée des autorités de certification pour les filtres
+  const certAuthorities = useMemo(() => {
+    const seen = new Set<string>()
+    places.forEach(p => p._certifications.forEach(c => {
+      const name = c.certification_authorities?.name
+      if (c.is_active && name) seen.add(name)
+    }))
+    return Array.from(seen).sort()
+  }, [places])
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim()
@@ -42,14 +56,20 @@ export default function Home() {
         || p.city?.toLowerCase().includes(q)
         || p.address?.toLowerCase().includes(q)
       const matchCat = filter === 'all' || p._cats.includes(filter)
-      return matchQ && matchCat
+      const matchOpen = !filterOpenNow || isOpenNow(p._hours) === 'open'
+      const matchCertType = !filterCertType || p._certifications.some(c =>
+        c.is_active && c.cert_type?.toLowerCase().includes(filterCertType)
+      )
+      const matchCertAuth = !filterCertAuth || p._certifications.some(c =>
+        c.is_active && c.certification_authorities?.name === filterCertAuth
+      )
+      return matchQ && matchCat && matchOpen && matchCertType && matchCertAuth
     })
-    // Tri automatique par proximité dès que la position GPS est connue
     if (userLoc) {
       list = [...list].sort((a, b) => (a._distanceKm ?? Infinity) - (b._distanceKm ?? Infinity))
     }
     return list
-  }, [places, query, filter, userLoc])
+  }, [places, query, filter, filterOpenNow, filterCertType, filterCertAuth, userLoc])
 
   const selected = useMemo<Place | null>(
     () => places.find(p => p.id === selectedId) ?? null,
@@ -177,7 +197,13 @@ export default function Home() {
               onSignOut={() => { signOut(); toast('Déconnecté', 'À bientôt !', 'info') }}
               onAuthClick={() => setAuthOpen(true)}
             />
-            <CategoryChipsMobile categories={categories} activeFilter={filter} onFilter={setFilter} />
+            <CategoryChipsMobile
+              categories={categories} activeFilter={filter} onFilter={setFilter}
+              filterOpenNow={filterOpenNow} onFilterOpenNow={setFilterOpenNow}
+              filterCertType={filterCertType} onFilterCertType={setFilterCertType}
+              filterCertAuth={filterCertAuth} onFilterCertAuth={setFilterCertAuth}
+              certAuthorities={certAuthorities}
+            />
           </>
         )}
 
@@ -257,6 +283,10 @@ export default function Home() {
         <Sidebar
           places={filtered} categories={categories} activeFilter={filter} selectedId={selectedId}
           loading={loading} userLoc={userLoc}
+          filterOpenNow={filterOpenNow} onFilterOpenNow={setFilterOpenNow}
+          filterCertType={filterCertType} onFilterCertType={setFilterCertType}
+          filterCertAuth={filterCertAuth} onFilterCertAuth={setFilterCertAuth}
+          certAuthorities={certAuthorities}
           onFilter={setFilter} onSelect={selectPlace}
         />
 
