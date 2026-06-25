@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
+import HoraireEditor, { emptyWeek, rowsToWeek, weekToRows, type WeekSchedule } from '@/app/components/HoraireEditor'
 
 interface Suggestion {
   id: string; created_at: string; status: string; place_id: string | null
@@ -329,16 +330,39 @@ function EditPlaceModal({ place, onClose }: { place: any; onClose: () => void })
     setBusy(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
   }
 
-  useEffect(() => { if (tab === 'photos') loadPhotos() }, [tab])
+  useEffect(() => {
+    if (tab === 'photos') loadPhotos()
+    if (tab === 'horaires') loadHours()
+  }, [tab])
 
   function getUrl(path: string) {
     const { data } = supabase.storage.from('photos').getPublicUrl(path)
     return data.publicUrl
   }
 
+  // ── Horaires ──
+  const [schedule, setSchedule] = useState<WeekSchedule>(emptyWeek())
+  const [hoursLoading, setHoursLoading] = useState(false)
+
+  async function loadHours() {
+    setHoursLoading(true)
+    const { data } = await supabase.from('opening_hours').select('*').eq('place_id', place.id)
+    setSchedule(data && data.length > 0 ? rowsToWeek(data) : emptyWeek())
+    setHoursLoading(false)
+  }
+
+  async function saveHours() {
+    setBusy(true)
+    await supabase.from('opening_hours').delete().eq('place_id', place.id)
+    const rows = weekToRows(place.id, schedule)
+    if (rows.length > 0) await supabase.from('opening_hours').insert(rows)
+    setBusy(false); setSaved(true); setTimeout(() => setSaved(false), 2000)
+  }
+
   const TABS = [
     { id: 'infos', label: 'Infos', icon: 'ti-edit' },
     { id: 'photos', label: 'Photos', icon: 'ti-photo' },
+    { id: 'horaires', label: 'Horaires', icon: 'ti-clock' },
     { id: 'gps', label: 'Localisation', icon: 'ti-map-pin' },
   ] as const
 
@@ -431,6 +455,17 @@ function EditPlaceModal({ place, onClose }: { place: any; onClose: () => void })
             </div>
           )}
 
+          {/* ── Onglet Horaires ── */}
+          {tab === 'horaires' && (
+            <div>
+              {hoursLoading ? (
+                <div style={{ textAlign: 'center', color: 'var(--text3)', padding: 32 }}>Chargement…</div>
+              ) : (
+                <HoraireEditor value={schedule} onChange={setSchedule} />
+              )}
+            </div>
+          )}
+
           {/* ── Onglet GPS ── */}
           {tab === 'gps' && (
             <div>
@@ -498,6 +533,11 @@ function EditPlaceModal({ place, onClose }: { place: any; onClose: () => void })
           {tab === 'infos' && (
             <button onClick={saveInfos} disabled={busy} style={{ ...actionBtn, height: 38, padding: '0 20px', background: 'var(--gold)', color: '#fff' }}>
               {busy ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+          )}
+          {tab === 'horaires' && (
+            <button onClick={saveHours} disabled={busy} style={{ ...actionBtn, height: 38, padding: '0 20px', background: 'var(--gold)', color: '#fff' }}>
+              {busy ? 'Enregistrement…' : 'Enregistrer les horaires'}
             </button>
           )}
           {tab === 'gps' && (

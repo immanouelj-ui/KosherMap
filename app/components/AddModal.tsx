@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useGeocode } from '@/hooks/useGeocode'
 import type { Profile } from '@/types'
 import type { Session } from '@supabase/supabase-js'
+import HoraireEditor, { emptyWeek, weekToRows, type WeekSchedule } from './HoraireEditor'
 
 const MiniMap = dynamic(() => import('./MiniMap'), { ssr: false })
 
@@ -29,10 +30,13 @@ export default function AddModal({ open, placeId, initialData, profile, session,
   const [photos, setPhotos]     = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
   const [progress, setProgress] = useState(0)
+  const [schedule, setSchedule] = useState<WeekSchedule>(emptyWeek())
+  const [showHoraires, setShowHoraires] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setF(initialData || {}); setError(''); setPhotos([]); setPreviews([])
+    setSchedule(emptyWeek()); setShowHoraires(false)
   }, [initialData, open])
 
   const set = (k: string, v: string) => setF(prev => ({ ...prev, [k]: v }))
@@ -81,6 +85,7 @@ export default function AddModal({ open, placeId, initialData, profile, session,
       const refFolder = placeId || `pending_${Date.now()}`
       const photoPaths = photos.length > 0 ? await uploadPhotos(refFolder) : []
 
+      const horaireRows = weekToRows('__placeholder__', schedule).map(({ place_id: _, ...r }) => r)
       const { error: err } = await supabase.from('place_suggestions').insert({
         place_id: placeId || null,
         user_id: profile?.id || null,
@@ -91,6 +96,7 @@ export default function AddModal({ open, placeId, initialData, profile, session,
           photo_paths: photoPaths,
           lat: geo?.lat ?? null,
           lng: geo?.lng ?? null,
+          opening_hours: horaireRows.length > 0 ? horaireRows : null,
         },
         status: 'pending',
       })
@@ -183,6 +189,24 @@ export default function AddModal({ open, placeId, initialData, profile, session,
               placeholder="Spécialités, informations utiles…"
               style={{ ...inp, height: 72, resize: 'none', padding: '10px 12px' }} />
           </F>
+
+          {/* Section horaires (optionnelle, dépliable) */}
+          <div style={{ marginBottom: 13 }}>
+            <button
+              type="button"
+              onClick={() => setShowHoraires(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font)', color: 'var(--text2)', fontSize: 13, fontWeight: 600 }}
+            >
+              <i className={`ti ${showHoraires ? 'ti-chevron-down' : 'ti-chevron-right'}`} style={{ fontSize: 13 }} />
+              <i className="ti ti-clock" style={{ fontSize: 14, color: 'var(--gold)' }} />
+              Horaires d'ouverture <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text3)', marginLeft: 4 }}>(optionnel)</span>
+            </button>
+            {showHoraires && (
+              <div style={{ marginTop: 12, padding: '14px 0 0', borderTop: '1px solid var(--border)' }}>
+                <HoraireEditor value={schedule} onChange={setSchedule} />
+              </div>
+            )}
+          </div>
 
           <F label={`Photos${!session ? ' (connexion requise)' : ' (max 5)'}`}>
             <input ref={fileRef} type="file" accept="image/*" multiple onChange={onFiles} style={{ display: 'none' }} />
