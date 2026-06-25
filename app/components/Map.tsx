@@ -133,6 +133,7 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
 
       // Ré-invalider après 300ms (cas où le layout est encore en train de s'établir)
       setTimeout(() => map.invalidateSize(), 300)
+      setTimeout(() => map.invalidateSize(), 1000)
 
       // Ré-invalider à chaque redimensionnement du conteneur (panneau détail qui s'ouvre)
       const ro = new ResizeObserver(() => map.invalidateSize())

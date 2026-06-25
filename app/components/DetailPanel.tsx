@@ -194,11 +194,11 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
                 src={getUrl(placePhotos[activePhoto].storage_path)}
                 alt=""
                 onClick={() => setLightboxOpen(true)}
-                onTouchStart={e => { (e.currentTarget as any)._tx = e.touches[0].clientX }}
+                onTouchStart={e => { e.stopPropagation(); (e.currentTarget as any)._tx = e.touches[0].clientX }}
                 onTouchEnd={e => {
-                  const dx = e.changedTouches[0].clientX - ((e.currentTarget as any)._tx || 0)
-                  if (Math.abs(dx) < 40) return
                   e.stopPropagation()
+                  const dx = e.changedTouches[0].clientX - ((e.currentTarget as any)._tx || 0)
+                  if (Math.abs(dx) < 40) { setLightboxOpen(true); return }
                   if (dx < 0 && activePhoto < placePhotos.length - 1) setActivePhoto(i => i + 1)
                   if (dx > 0 && activePhoto > 0) setActivePhoto(i => i - 1)
                 }}
