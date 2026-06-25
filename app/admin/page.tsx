@@ -241,7 +241,7 @@ export default function AdminPage() {
    Modale d'édition — 3 onglets : Infos / Photos / GPS
 ══════════════════════════════════════════════════════ */
 function EditPlaceModal({ place, onClose }: { place: any; onClose: () => void }) {
-  const [tab, setTab] = useState<'infos' | 'photos' | 'gps'>('infos')
+  const [tab, setTab] = useState<'infos' | 'photos' | 'horaires' | 'gps'>('infos')
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
 
