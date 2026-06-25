@@ -81,6 +81,22 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
   useEffect(() => {
     if (mapRef.current || !containerRef.current) return
 
+    // Attendre que le container ait de vraies dimensions avant d'init Leaflet
+    function init() {
+      if (mapRef.current || !containerRef.current) return
+      const { offsetWidth, offsetHeight } = containerRef.current
+      if (offsetWidth === 0 || offsetHeight === 0) {
+        // Container pas encore visible — réessayer via IntersectionObserver
+        const io = new IntersectionObserver(entries => {
+          if (entries[0].isIntersecting) { io.disconnect(); init() }
+        })
+        io.observe(containerRef.current)
+        return
+      }
+      doInit()
+    }
+
+    function doInit() {
     Promise.all([
       import('leaflet'),
       import('leaflet.markercluster'),
@@ -126,20 +142,21 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
       cluster.addTo(map)
       clusterRef.current = cluster
 
-      // Fix principal : invalider la taille une fois que le DOM est stable
-      requestAnimationFrame(() => {
-        map.invalidateSize()
-      })
-
-      // Ré-invalider après 300ms (cas où le layout est encore en train de s'établir)
+      requestAnimationFrame(() => map.invalidateSize())
       setTimeout(() => map.invalidateSize(), 300)
       setTimeout(() => map.invalidateSize(), 1000)
 
-      // Ré-invalider à chaque redimensionnement du conteneur (panneau détail qui s'ouvre)
+      // Ré-invalider à chaque redimensionnement du conteneur
       const ro = new ResizeObserver(() => map.invalidateSize())
       ro.observe(containerRef.current!)
       ;(map as any)._ro = ro
+
+      // Ré-invalider quand la fenêtre finit de charger (polyfill pour slow connections)
+      window.addEventListener('load', () => map.invalidateSize(), { once: true })
     })
+    } // fin doInit
+
+    init()
 
     return () => {
       if (mapRef.current) {
