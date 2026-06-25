@@ -194,7 +194,15 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
                 src={getUrl(placePhotos[activePhoto].storage_path)}
                 alt=""
                 onClick={() => setLightboxOpen(true)}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in' }}
+                onTouchStart={e => { (e.currentTarget as any)._tx = e.touches[0].clientX }}
+                onTouchEnd={e => {
+                  const dx = e.changedTouches[0].clientX - ((e.currentTarget as any)._tx || 0)
+                  if (Math.abs(dx) < 40) return
+                  e.stopPropagation()
+                  if (dx < 0 && activePhoto < placePhotos.length - 1) setActivePhoto(i => i + 1)
+                  if (dx > 0 && activePhoto > 0) setActivePhoto(i => i - 1)
+                }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'zoom-in', userSelect: 'none' }}
               />
               {/* Dégradé bas pour lisibilité */}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,.1) 0%, transparent 40%, rgba(0,0,0,.5) 100%)' }} />
@@ -202,12 +210,12 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
               {/* Navigation photos */}
               {placePhotos.length > 1 && (
                 <>
-                  {activePhoto > 0 && (
+                  {!fullscreen && activePhoto > 0 && (
                     <button onClick={e => { e.stopPropagation(); setActivePhoto(i => i - 1); setLightboxOpen(true) }} style={navBtnStyle('left')}>
                       <i className="ti ti-chevron-left" />
                     </button>
                   )}
-                  {activePhoto < placePhotos.length - 1 && (
+                  {!fullscreen && activePhoto < placePhotos.length - 1 && (
                     <button onClick={e => { e.stopPropagation(); setActivePhoto(i => i + 1); setLightboxOpen(true) }} style={navBtnStyle('right')}>
                       <i className="ti ti-chevron-right" />
                     </button>
