@@ -65,7 +65,28 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
       .select('id,storage_path,is_primary')
       .eq('place_id', p.id)
       .order('is_primary', { ascending: false })
-    setPlacePhotos(data || [])
+
+    if (data && data.length > 0) {
+      setPlacePhotos(data)
+      return
+    }
+
+    // Fallback : lister les fichiers directement depuis le bucket Storage
+    const { data: files } = await supabase.storage
+      .from('photos')
+      .list(`places/${p.id}`, { limit: 10, sortBy: { column: 'name', order: 'asc' } })
+
+    if (files && files.length > 0) {
+      const synth = files
+        .filter(f => f.name.endsWith('.jpg') || f.name.endsWith('.png') || f.name.endsWith('.webp'))
+        .map((f, i) => ({
+          id: f.id || `${p.id}-${i}`,
+          storage_path: `places/${p.id}/${f.name}`,
+          is_primary: f.name === 'cover.jpg',
+        }))
+        .sort((a, b) => (a.is_primary ? -1 : 1) - (b.is_primary ? -1 : 1))
+      setPlacePhotos(synth)
+    }
   }
 
   function getUrl(path: string) {
@@ -376,26 +397,30 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
           <Section title="Horaires">
             <div style={{ background: 'var(--bg)', borderRadius: 12, overflow: 'hidden' }}>
               {DAYS.map((d, i) => {
-                const h = p._hours.find(x => x.day_of_week === i)
+                const slots = p._hours.filter(x => x.day_of_week === i && !x.is_closed && x.open_time)
+                const isClosed = p._hours.some(x => x.day_of_week === i && x.is_closed) || slots.length === 0
                 const isToday = i === today
-                const isClosed = !h || h.is_closed
                 return (
                   <div key={i} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
                     padding: '9px 14px',
                     background: isToday ? '#B8860B08' : 'transparent',
                     borderBottom: i < 6 ? '1px solid var(--border)' : 'none',
                   }}>
-                    <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 500, color: isToday ? '#B8860B' : 'var(--text2)', width: 88 }}>{d}</span>
+                    <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 500, color: isToday ? '#B8860B' : 'var(--text2)', width: 88, flexShrink: 0 }}>{d}</span>
                     {isClosed ? (
-                      <span style={{ fontSize: 12.5, color: 'var(--text3)', fontStyle: 'italic' }}>Fermé</span>
+                      <span style={{ fontSize: 12.5, color: 'var(--text3)', fontStyle: 'italic', flex: 1 }}>Fermé</span>
                     ) : (
-                      <span style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? '#B8860B' : 'var(--text2)' }}>
-                        {h!.open_time} – {h!.close_time}
-                      </span>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {slots.map((s, si) => (
+                          <span key={si} style={{ fontSize: 13, fontWeight: isToday ? 700 : 400, color: isToday ? '#B8860B' : 'var(--text2)' }}>
+                            {s.open_time} – {s.close_time}
+                          </span>
+                        ))}
+                      </div>
                     )}
                     {isToday && (
-                      <span style={{ fontSize: 10, fontWeight: 700, color: openStatus === 'open' ? '#1FA452' : '#E0363B', marginLeft: 8 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: openStatus === 'open' ? '#1FA452' : '#E0363B', marginLeft: 8, flexShrink: 0 }}>
                         {openStatus === 'open' ? '● Ouvert' : openStatus === 'closed' ? '● Fermé' : ''}
                       </span>
                     )}
