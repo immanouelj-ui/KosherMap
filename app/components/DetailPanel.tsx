@@ -203,12 +203,12 @@ export default function DetailPanel({ place: p, categories, session, profile, fu
               {placePhotos.length > 1 && (
                 <>
                   {activePhoto > 0 && (
-                    <button onClick={() => setActivePhoto(i => i - 1)} style={navBtnStyle('left')}>
+                    <button onClick={e => { e.stopPropagation(); setActivePhoto(i => i - 1); setLightboxOpen(true) }} style={navBtnStyle('left')}>
                       <i className="ti ti-chevron-left" />
                     </button>
                   )}
                   {activePhoto < placePhotos.length - 1 && (
-                    <button onClick={() => setActivePhoto(i => i + 1)} style={navBtnStyle('right')}>
+                    <button onClick={e => { e.stopPropagation(); setActivePhoto(i => i + 1); setLightboxOpen(true) }} style={navBtnStyle('right')}>
                       <i className="ti ti-chevron-right" />
                     </button>
                   )}
