@@ -22,7 +22,7 @@ export default function CategoryChipsMobile({
   onFilterOpenNow, onFilterCertType, onFilterCertAuth,
 }: Props) {
   const [open, setOpen] = useState(false)
-  const anyFilter = filterOpenNow || filterCertType || filterCertAuth || activeFilter !== 'all'
+  const anyFilter = filterOpenNow || !!filterCertType || !!filterCertAuth || activeFilter !== 'all'
   const activeCount = (filterOpenNow ? 1 : 0) + (filterCertType ? 1 : 0) + (filterCertAuth ? 1 : 0) + (activeFilter !== 'all' ? 1 : 0)
 
   function clearAll() {
