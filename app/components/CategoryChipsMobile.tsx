@@ -134,11 +134,23 @@ export default function CategoryChipsMobile({
           {certAuthorities.length > 0 && (
             <>
               <PanelLabel>Certification</PanelLabel>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <select
+                value={filterCertAuth || ''}
+                onChange={e => onFilterCertAuth(e.target.value || null)}
+                style={{
+                  width: '100%', height: 42, borderRadius: 10,
+                  border: `1.5px solid ${filterCertAuth ? 'var(--gold)' : 'var(--border)'}`,
+                  background: filterCertAuth ? 'var(--gold-bg)' : '#fff',
+                  color: filterCertAuth ? 'var(--gold)' : 'var(--text2)',
+                  fontSize: 13, fontWeight: filterCertAuth ? 700 : 500,
+                  padding: '0 12px', fontFamily: 'var(--font)', cursor: 'pointer', outline: 'none',
+                }}
+              >
+                <option value="">Toutes les certifications</option>
                 {certAuthorities.map(auth => (
-                  <PanelChip key={auth} label={auth} active={filterCertAuth === auth} onClick={() => onFilterCertAuth(filterCertAuth === auth ? null : auth)} small />
+                  <option key={auth} value={auth}>{auth}</option>
                 ))}
-              </div>
+              </select>
             </>
           )}
 
