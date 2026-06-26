@@ -96,11 +96,9 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
       doInit()
     }
 
-    function doInit() {
-    Promise.all([
-      import('leaflet'),
-      import('leaflet.markercluster'),
-    ]).then(([{ default: L }]) => {
+    async function doInit() {
+      const { default: L } = await import('leaflet')
+      try { await import('leaflet.markercluster') } catch {}
       if (mapRef.current || !containerRef.current) return
 
       const map = L.map(containerRef.current, {
@@ -153,7 +151,7 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
 
       // Ré-invalider quand la fenêtre finit de charger (polyfill pour slow connections)
       window.addEventListener('load', () => map.invalidateSize(), { once: true })
-    })
+      setTimeout(() => map.invalidateSize(), 3000)
     } // fin doInit
 
     init()
