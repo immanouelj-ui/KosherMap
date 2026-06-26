@@ -180,6 +180,7 @@ export default function Home() {
           userLoc={userLoc}
           tileStyle={tileStyle}
           isMobile
+          sheetSnap={sheetSnap}
           onTileChange={setTile}
           onSelect={selectPlace}
           onLocate={locate}

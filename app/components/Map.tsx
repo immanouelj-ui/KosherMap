@@ -56,12 +56,13 @@ interface Props {
   userLoc: { lat: number; lng: number } | null
   tileStyle: TileStyle
   isMobile?: boolean
+  sheetSnap?: number
   onTileChange: (s: TileStyle) => void
   onSelect: (id: string) => void
   onLocate: () => void
 }
 
-export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMobile, onTileChange, onSelect, onLocate }: Props) {
+export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMobile, sheetSnap = 1, onTileChange, onSelect, onLocate }: Props) {
   const containerRef   = useRef<HTMLDivElement>(null)
   const mapRef         = useRef<any>(null)
   const tileLayerRef   = useRef<any>(null)
@@ -329,7 +330,7 @@ export default function KosherMap({ places, selectedId, userLoc, tileStyle, isMo
       {/* Contrôles zoom + localisation */}
       <div style={{
         position: 'absolute', right: 14,
-        bottom: isMobile ? 'calc(14vh + 14px)' : 28,
+        bottom: isMobile ? `calc(${[14, 50, 92][sheetSnap] ?? 14}vh + 64px)` : 28,
         zIndex: 500,
         display: 'flex', flexDirection: 'column', gap: 6,
       }}>
