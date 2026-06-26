@@ -20,7 +20,6 @@ interface Props {
 }
 
 const CATS = ['boucherie','epicerie','patisserie','restaurant']
-const CERTS = ['Beth Din de Paris','Grand Consistoire','Badatz','OK Kosher','OU Kosher']
 const BUCKET = 'photos'
 
 export default function AddModal({ open, placeId, initialData, profile, session, onClose, onSuccess }: Props) {
@@ -32,7 +31,14 @@ export default function AddModal({ open, placeId, initialData, profile, session,
   const [progress, setProgress] = useState(0)
   const [schedule, setSchedule] = useState<WeekSchedule>(emptyWeek())
   const [showHoraires, setShowHoraires] = useState(false)
+  const [certAuthorities, setCertAuthorities] = useState<{ id: string; name: string }[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    supabase.from('certification_authorities').select('id,name').order('name').then(({ data }) => {
+      if (data) setCertAuthorities(data)
+    })
+  }, [])
 
   useEffect(() => {
     setF(initialData || {}); setError(''); setPhotos([]); setPreviews([])
@@ -180,8 +186,8 @@ export default function AddModal({ open, placeId, initialData, profile, session,
           </div>
           <F label="Autorité de certification">
             <select value={f.cert || ''} onChange={e => set('cert', e.target.value)} style={inp}>
-              <option value="">Inconnue</option>
-              {CERTS.map(v => <option key={v} value={v}>{v}</option>)}
+              <option value="">Inconnue / non renseignée</option>
+              {certAuthorities.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
             </select>
           </F>
           <F label="Description / Notes">
