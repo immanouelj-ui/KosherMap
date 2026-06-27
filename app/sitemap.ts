@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .eq('is_deleted', false)
     .not('slug', 'is', null)
     .limit(50000)
-    .catch(() => ({ data: null }))
+    .then(r => r, () => ({ data: null }))
 
   const placeUrls: MetadataRoute.Sitemap = (places || []).map(p => ({
     url: `${BASE}/place/${p.slug}`,
