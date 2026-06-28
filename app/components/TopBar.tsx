@@ -117,9 +117,9 @@ export default function TopBar({ query, onQuery, profile, session, isAdmin, onAd
 
           {menu && session && (
             <div style={{
-              position: 'absolute', top: 42, right: 0, background: '#fff',
+              position: 'fixed', top: 60, right: 18, background: '#fff',
               border: '1px solid var(--border)', borderRadius: 12,
-              boxShadow: 'var(--shadow-lg)', minWidth: 200, zIndex: 9999, overflow: 'hidden',
+              boxShadow: '0 8px 30px rgba(0,0,0,.12)', minWidth: 200, zIndex: 99999, overflow: 'hidden',
             }}>
               <div style={{ padding: '12px 14px 10px', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{profile?.display_name || 'Membre'}</div>
