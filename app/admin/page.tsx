@@ -23,6 +23,8 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false)
   const [placeSearch, setPlaceSearch] = useState('')
   const [editingPlace, setEditingPlace] = useState<any | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [scanProgress, setScanProgress] = useState<{ done: number; total: number; closed: string[] } | null>(null)
 
   useEffect(() => {
     if (isAdmin) { loadSuggestions(); loadPlaces(); loadDeletions() }
@@ -68,6 +70,30 @@ export default function AdminPage() {
     await supabase.from('places').update({ is_deleted: !deleted }).eq('id', id)
     await loadPlaces()
     setBusy(false)
+  }
+
+  async function scanClosedPlaces() {
+    const active = places.filter(p => !p.is_deleted)
+    if (active.length === 0) return
+    setScanning(true)
+    setScanProgress({ done: 0, total: active.length, closed: [] })
+    const closed: string[] = []
+    for (let i = 0; i < active.length; i++) {
+      const p = active[i]
+      try {
+        const res = await fetch('/api/admin/check-closed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ place_id: p.id, name: p.name, city: p.city }),
+        })
+        const data = await res.json()
+        if (data.closed) closed.push(p.name)
+      } catch {}
+      setScanProgress({ done: i + 1, total: active.length, closed: [...closed] })
+      await new Promise(r => setTimeout(r, 1200))
+    }
+    setScanning(false)
+    await loadPlaces()
   }
 
   async function togglePremium(id: string, currentPremium: boolean) {
@@ -186,11 +212,46 @@ export default function AdminPage() {
         {/* ── Lieux ── */}
         {tab === 'places' && (
           <div>
-            <div style={{ position: 'relative', marginBottom: 14, maxWidth: 360 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div style={{ position: 'relative', flex: 1, maxWidth: 360 }}>
               <i className="ti ti-search" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 15 }} />
               <input type="search" value={placeSearch} onChange={e => setPlaceSearch(e.target.value)} placeholder="Rechercher un lieu, une ville…"
                 style={{ width: '100%', height: 38, border: '1px solid var(--border)', borderRadius: 8, padding: '0 12px 0 36px', fontSize: 13, fontFamily: 'var(--font)', outline: 'none' }} />
+              </div>
+              <button
+                onClick={scanClosedPlaces}
+                disabled={scanning || busy}
+                style={{ ...actionBtn, background: scanning ? 'var(--bg)' : 'rgba(224,54,59,.08)', color: 'var(--red)', border: '1px solid rgba(224,54,59,.25)', whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                <i className="ti ti-brand-google" />
+                {scanning ? `Scan… ${scanProgress?.done}/${scanProgress?.total}` : 'Vérifier fermetures Google'}
+              </button>
             </div>
+
+            {scanProgress && (
+              <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <div style={{ flex: 1, height: 6, background: 'var(--bg)', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: 'var(--red)', borderRadius: 3, transition: 'width .3s', width: `${Math.round((scanProgress.done / scanProgress.total) * 100)}%` }} />
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>{scanProgress.done}/{scanProgress.total}</span>
+                </div>
+                {scanProgress.closed.length === 0 && !scanning && (
+                  <p style={{ fontSize: 12.5, color: 'var(--green)', margin: 0, fontWeight: 600 }}>Aucun établissement définitivement fermé détecté.</p>
+                )}
+                {scanProgress.closed.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--red)', margin: '0 0 6px' }}>
+                      {scanProgress.closed.length} établissement{scanProgress.closed.length > 1 ? 's' : ''} définitivement fermé{scanProgress.closed.length > 1 ? 's' : ''} et masqué{scanProgress.closed.length > 1 ? 's' : ''} :
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: 18 }}>
+                      {scanProgress.closed.map(n => <li key={n} style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 2 }}>{n}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
