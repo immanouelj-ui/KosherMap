@@ -12,18 +12,18 @@ export async function POST(req: NextRequest) {
   if (!key) return NextResponse.json({ error: 'Stripe non configuré' }, { status: 500 })
   if (!priceId) return NextResponse.json({ error: 'STRIPE_PRICE_ID non configuré' }, { status: 500 })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stripe = new Stripe(key) as any
+  const stripe = new Stripe(key)
   const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.koshermap.store'
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
     metadata: { place_id, place_name: place_name || '' },
-    ui_mode: 'embedded',
-    return_url: `${BASE}/premium/success?place_id=${place_id}&session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${BASE}/premium/success?place_id=${place_id}`,
+    cancel_url: `${BASE}/premium`,
     locale: 'fr',
+    payment_method_types: ['card'],
   })
 
-  return NextResponse.json({ clientSecret: session.client_secret })
+  return NextResponse.json({ url: session.url })
 }
