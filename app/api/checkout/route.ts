@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const { place_id, place_name } = await req.json()
   if (!place_id) return NextResponse.json({ error: 'place_id requis' }, { status: 400 })
 
-  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.koshermap.store'
+  const key = process.env.STRIPE_SECRET_KEY
   const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID
-
+  if (!key) return NextResponse.json({ error: 'Stripe non configuré' }, { status: 500 })
   if (!priceId) return NextResponse.json({ error: 'STRIPE_PRICE_ID non configuré' }, { status: 500 })
+
+  const stripe = new Stripe(key)
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.koshermap.store'
 
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
