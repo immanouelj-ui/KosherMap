@@ -25,6 +25,8 @@ export default function AdminPage() {
   const [editingPlace, setEditingPlace] = useState<any | null>(null)
   const [scanning, setScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState<{ done: number; total: number; closed: string[] } | null>(null)
+  const [scanningHours, setScanningHours] = useState(false)
+  const [hoursProgress, setHoursProgress] = useState<{ done: number; total: number; found: string[] } | null>(null)
 
   useEffect(() => {
     if (isAdmin) { loadSuggestions(); loadPlaces(); loadDeletions() }
@@ -94,6 +96,29 @@ export default function AdminPage() {
     }
     setScanning(false)
     await loadPlaces()
+  }
+
+  async function scanMissingHours() {
+    const targets = places.filter(p => !p.is_deleted)
+    if (targets.length === 0) return
+    setScanningHours(true)
+    setHoursProgress({ done: 0, total: targets.length, found: [] })
+    const found: string[] = []
+    for (let i = 0; i < targets.length; i++) {
+      const p = targets[i]
+      try {
+        const res = await fetch('/api/admin/scrape-hours', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ place_id: p.id, name: p.name, city: p.city }),
+        })
+        const data = await res.json()
+        if (data.found) found.push(`${p.name} (${data.days}j)`)
+      } catch {}
+      setHoursProgress({ done: i + 1, total: targets.length, found: [...found] })
+      await new Promise(r => setTimeout(r, 1500))
+    }
+    setScanningHours(false)
   }
 
   async function togglePremium(id: string, currentPremium: boolean) {
@@ -220,13 +245,45 @@ export default function AdminPage() {
               </div>
               <button
                 onClick={scanClosedPlaces}
-                disabled={scanning || busy}
+                disabled={scanning || scanningHours || busy}
                 style={{ ...actionBtn, background: scanning ? 'var(--bg)' : 'rgba(224,54,59,.08)', color: 'var(--red)', border: '1px solid rgba(224,54,59,.25)', whiteSpace: 'nowrap', flexShrink: 0 }}
               >
                 <i className="ti ti-brand-google" />
-                {scanning ? `Scan… ${scanProgress?.done}/${scanProgress?.total}` : 'Vérifier fermetures Google'}
+                {scanning ? `Scan… ${scanProgress?.done}/${scanProgress?.total}` : 'Vérifier fermetures'}
+              </button>
+              <button
+                onClick={scanMissingHours}
+                disabled={scanning || scanningHours || busy}
+                style={{ ...actionBtn, background: scanningHours ? 'var(--bg)' : 'rgba(31,164,82,.08)', color: 'var(--green)', border: '1px solid rgba(31,164,82,.25)', whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                <i className="ti ti-clock" />
+                {scanningHours ? `Horaires… ${hoursProgress?.done}/${hoursProgress?.total}` : 'Scraper les horaires'}
               </button>
             </div>
+
+            {hoursProgress && (
+              <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <div style={{ flex: 1, height: 6, background: 'var(--bg)', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: 'var(--green)', borderRadius: 3, transition: 'width .3s', width: `${Math.round((hoursProgress.done / hoursProgress.total) * 100)}%` }} />
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>{hoursProgress.done}/{hoursProgress.total}</span>
+                </div>
+                {!scanningHours && hoursProgress.found.length === 0 && (
+                  <p style={{ fontSize: 12.5, color: 'var(--text3)', margin: 0 }}>Aucun horaire récupéré — tous avaient déjà des horaires ou Google n'a rien retourné.</p>
+                )}
+                {hoursProgress.found.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--green)', margin: '0 0 6px' }}>
+                      {hoursProgress.found.length} fiche{hoursProgress.found.length > 1 ? 's' : ''} mise{hoursProgress.found.length > 1 ? 's' : ''} à jour :
+                    </p>
+                    <ul style={{ margin: 0, paddingLeft: 18 }}>
+                      {hoursProgress.found.map(n => <li key={n} style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 2 }}>{n}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {scanProgress && (
               <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px', marginBottom: 14 }}>
