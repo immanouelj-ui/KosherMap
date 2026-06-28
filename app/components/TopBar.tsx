@@ -123,6 +123,22 @@ export default function TopBar({ query, onQuery, profile, session, isAdmin, onAd
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{profile?.display_name || 'Membre'}</div>
                 <div style={{ fontSize: 11.5, color: 'var(--text3)', marginTop: 2 }}>{session.user.email}</div>
               </div>
+              <a
+                href="/premium"
+                onClick={() => setMenu(false)}
+                style={{
+                  padding: '10px 14px', fontSize: 13, color: 'var(--gold)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                  textDecoration: 'none', borderBottom: '1px solid var(--border)',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <svg width="13" height="12" viewBox="0 0 11 10" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M1 8.5L2.2 3.2L4.8 6L5.5 1.5L6.2 6L8.8 3.2L10 8.5H1Z" fill="currentColor" stroke="currentColor" strokeWidth=".4" strokeLinejoin="round"/>
+                </svg>
+                Passer en Premium
+              </a>
               <div
                 onClick={() => { onSignOut(); setMenu(false) }}
                 style={{
