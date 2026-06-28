@@ -49,12 +49,13 @@ export default function Home() {
   }, [places])
 
   const filtered = useMemo(() => {
-    const q = query.toLowerCase().trim()
+    const norm = (s: string) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    const q = norm(query.trim())
     let list = places.filter(p => {
       const matchQ = !q
-        || p.name?.toLowerCase().includes(q)
-        || p.city?.toLowerCase().includes(q)
-        || p.address?.toLowerCase().includes(q)
+        || norm(p.name || '').includes(q)
+        || norm(p.city || '').includes(q)
+        || norm(p.address || '').includes(q)
       const matchCat = filter === 'all' || p._cats.includes(filter)
       const matchOpen = !filterOpenNow || isOpenNow(p._hours) === 'open'
       const matchCertType = !filterCertType || p._certifications.some(c =>
