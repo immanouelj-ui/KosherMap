@@ -8,67 +8,57 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-// Remplace les séquences unicode \uXXXX dans une string brute HTML
-function decodeUnicode(str: string): string {
-  return str.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) =>
-    String.fromCharCode(parseInt(hex, 16))
-  )
-}
+// Cherche un lieu sur OpenStreetMap par nom + ville
+// Retourne true si le lieu est marqué comme fermé définitivement
+async function checkClosedOnOSM(name: string, city: string): Promise<boolean> {
+  const query = `
+[out:json][timeout:15];
+area["name"="${city}"]["boundary"="administrative"]->.searchArea;
+(
+  node["name"~"${name.replace(/"/g, '')}",i](area.searchArea);
+  way["name"~"${name.replace(/"/g, '')}",i](area.searchArea);
+);
+out body;
+`
+  const res = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `data=${encodeURIComponent(query)}`,
+  })
 
-function isClosed(html: string): boolean {
-  // Décode les escapes unicode présents dans les blocs <script> de Google
-  const decoded = decodeUnicode(html)
-  const lower = decoded.toLowerCase()
+  if (!res.ok) return false
+  const data = await res.json()
 
-  return (
-    lower.includes('définitivement fermé') ||
-    lower.includes('définitivement close') ||
-    lower.includes('permanently closed') ||
-    lower.includes('closed permanently') ||
-    // Variantes encodées HTML
-    lower.includes('d&#233;finitivement ferm&#233;') ||
-    lower.includes('définitivement fermé') ||
-    // Variante sans espace insécable
-    lower.includes('définitivement fermé') ||
-    // Clés présentes dans le JSON de Google Maps Knowledge Graph
-    lower.includes('"closed_permanently"') ||
-    lower.includes('"business_status":"closed_permanently"') ||
-    lower.includes('closedpermanently')
-  )
+  for (const el of (data.elements || [])) {
+    const tags = el.tags || {}
+    // Tags OSM indiquant une fermeture définitive
+    const keys = Object.keys(tags)
+    if (
+      keys.some(k => k.startsWith('disused:') || k.startsWith('abandoned:') || k.startsWith('demolished:') || k.startsWith('removed:')) ||
+      tags['end_date'] ||
+      tags['opening_hours'] === 'closed' ||
+      tags['opening_hours'] === 'off'
+    ) {
+      return true
+    }
+  }
+
+  return false
 }
 
 export async function POST(req: NextRequest) {
   const { place_id, name, city } = await req.json()
   if (!place_id || !name) return NextResponse.json({ error: 'place_id et name requis' }, { status: 400 })
 
-  const query = [name, city].filter(Boolean).join(' ')
-
-  // On essaie deux URLs : Google Search + Google Maps
-  const urls = [
-    `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=fr&gl=fr&num=3`,
-    `https://www.google.com/maps/search/${encodeURIComponent(query)}`,
-  ]
-
-  const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
-    'Accept': 'text/html,application/xhtml+xml,application/xhtml+xml;q=0.9,*/*;q=0.8',
-    'Cache-Control': 'no-cache',
-  }
-
   try {
-    for (const url of urls) {
-      const res = await fetch(url, { headers })
-      const html = await res.text()
+    const closed = await checkClosedOnOSM(name, city || '')
 
-      if (isClosed(html)) {
-        await supabaseAdmin.from('places').update({ is_deleted: true }).eq('id', place_id)
-        return NextResponse.json({ place_id, name, closed: true })
-      }
+    if (closed) {
+      await supabaseAdmin.from('places').update({ is_deleted: true }).eq('id', place_id)
     }
 
-    return NextResponse.json({ place_id, name, closed: false })
+    return NextResponse.json({ place_id, name, closed })
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Erreur scraping' }, { status: 500 })
+    return NextResponse.json({ error: e?.message || 'Erreur OSM' }, { status: 500 })
   }
 }
