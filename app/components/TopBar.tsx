@@ -19,14 +19,6 @@ export default function TopBar({ query, onQuery, profile, session, isAdmin, onAd
   const [menu, setMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const fn = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenu(false)
-    }
-    document.addEventListener('mousedown', fn)
-    return () => document.removeEventListener('mousedown', fn)
-  }, [])
-
   const initials = profile?.display_name?.slice(0, 2).toUpperCase()
     ?? session?.user?.email?.slice(0, 2).toUpperCase()
     ?? null
@@ -101,6 +93,12 @@ export default function TopBar({ query, onQuery, profile, session, isAdmin, onAd
 
         {/* Avatar / connexion */}
         <div ref={menuRef} style={{ position: 'relative' }}>
+          {menu && (
+            <div
+              onClick={() => setMenu(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 99998 }}
+            />
+          )}
           <div
             onClick={() => session ? setMenu(m => !m) : onAuthClick()}
             style={{
