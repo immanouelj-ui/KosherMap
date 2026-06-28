@@ -45,14 +45,23 @@ export default function PremiumPage() {
   async function subscribe() {
     if (!selected) return
     setLoading(true)
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ place_id: selected.id, place_name: selected.name }),
-    })
-    const { url, error } = await res.json()
-    if (error) { alert(error); setLoading(false); return }
-    window.location.href = url
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ place_id: selected.id, place_name: selected.name }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.error) {
+        alert(data.error || 'Une erreur est survenue. Vérifiez la configuration Stripe.')
+        setLoading(false)
+        return
+      }
+      window.location.href = data.url
+    } catch {
+      alert('Erreur réseau. Réessayez.')
+      setLoading(false)
+    }
   }
 
   const inp: React.CSSProperties = {
