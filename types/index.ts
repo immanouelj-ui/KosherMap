@@ -46,6 +46,8 @@ export interface Place {
   location: string | null
   latitude: number | null
   longitude: number | null
+  is_premium: boolean
+  premium_until: string | null
   _cats: string[]
   _certifications: Certification[]
   _hours: OpeningHour[]

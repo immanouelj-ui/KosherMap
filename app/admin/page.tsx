@@ -51,7 +51,7 @@ export default function AdminPage() {
 
   async function loadPlaces() {
     const { data } = await supabase.from('places')
-      .select('id,name,city,address,phone,website,description,status,is_deleted,avg_rating,review_count,location,place_categories(category_id,categories(slug,name))')
+      .select('id,name,city,address,phone,website,description,status,is_deleted,avg_rating,review_count,location,is_premium,premium_until,place_categories(category_id,categories(slug,name))')
       .order('name')
     setPlaces(data || [])
   }
@@ -66,6 +66,16 @@ export default function AdminPage() {
   async function togglePlace(id: string, deleted: boolean) {
     setBusy(true)
     await supabase.from('places').update({ is_deleted: !deleted }).eq('id', id)
+    await loadPlaces()
+    setBusy(false)
+  }
+
+  async function togglePremium(id: string, currentPremium: boolean) {
+    setBusy(true)
+    await supabase.from('places').update({
+      is_premium: !currentPremium,
+      premium_until: !currentPremium ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null,
+    }).eq('id', id)
     await loadPlaces()
     setBusy(false)
   }
@@ -185,7 +195,7 @@ export default function AdminPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-                    {['Nom', 'Ville', 'Tél', 'GPS', 'Statut'].map(h => (
+                    {['Nom', 'Ville', 'Tél', 'GPS', 'Premium', 'Statut'].map(h => (
                       <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 11.5, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{h}</th>
                     ))}
                     <th />
@@ -209,6 +219,13 @@ export default function AdminPage() {
                           ? <span style={{ fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>✓ GPS</span>
                           : <span style={{ fontSize: 11, color: 'var(--red)', fontWeight: 600 }}>✗ Manquant</span>
                         }
+                      </td>
+                      <td style={{ padding: '10px 14px' }} onClick={e => e.stopPropagation()}>
+                        <button onClick={() => togglePremium(p.id, p.is_premium)} disabled={busy}
+                          title={p.premium_until ? `Expire : ${new Date(p.premium_until).toLocaleDateString('fr-FR')}` : ''}
+                          style={{ ...actionBtn, background: p.is_premium ? 'rgba(184,134,11,.12)' : 'var(--bg)', color: p.is_premium ? 'var(--gold)' : 'var(--text3)', border: `1px solid ${p.is_premium ? 'rgba(184,134,11,.35)' : 'var(--border)'}` }}>
+                          {p.is_premium ? '👑 Premium' : '— Activer'}
+                        </button>
                       </td>
                       <td style={{ padding: '10px 14px' }}>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 8, background: p.is_deleted ? 'rgba(224,54,59,.08)' : 'rgba(31,164,82,.08)', color: p.is_deleted ? 'var(--red)' : 'var(--green)' }}>

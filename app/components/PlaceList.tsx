@@ -56,8 +56,13 @@ export function PlaceList({ places, categories, selectedId, loading, onSelect }:
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                  {p.is_premium && (
+                    <span title="Fiche Premium" style={{ fontSize: 13, flexShrink: 0 }}>👑</span>
+                  )}
+                  <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                </div>
                 {p._distanceKm != null && (
                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue)', flexShrink: 0 }}>{formatDistance(p._distanceKm)}</span>
                 )}

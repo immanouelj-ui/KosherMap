@@ -20,7 +20,7 @@ export function usePlaces() {
         supabase.from('categories').select('*').order('name'),
         supabase.from('places').select(`
           id,name,slug,address,city,country,phone,website,description,
-          avg_rating,review_count,status,is_deleted,location,
+          avg_rating,review_count,status,is_deleted,location,is_premium,premium_until,
           place_categories(category_id,categories(name,slug,icon)),
           certifications(id,cert_type,valid_until,is_active,certification_authorities(name)),
           opening_hours(day_of_week,open_time,close_time,is_closed),
@@ -40,11 +40,20 @@ export function usePlaces() {
           latitude: coords?.lat ?? null,
           longitude: coords?.lng ?? null,
           _cats: p.place_categories?.map((pc: any) => pc.categories?.slug).filter(Boolean) || [],
+          is_premium: p.is_premium ?? false,
+          premium_until: p.premium_until ?? null,
           _certifications: p.certifications || [],
           _hours: p.opening_hours || [],
           _reviews: p.reviews || [],
           _photos: [],
         }
+      })
+
+      // Places premium en tête de liste
+      mapped.sort((a, b) => {
+        if (a.is_premium && !b.is_premium) return -1
+        if (!a.is_premium && b.is_premium) return 1
+        return (a.name || '').localeCompare(b.name || '', 'fr')
       })
 
       setPlaces(mapped)
