@@ -44,14 +44,22 @@ export default function PremiumPage() {
     setSearching(false)
   }
 
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+
   const fetchClientSecret = useCallback(async () => {
     if (!selected) return ''
+    setCheckoutError(null)
     const res = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ place_id: selected.id, place_name: selected.name }),
     })
     const data = await res.json().catch(() => ({}))
+    if (!res.ok || data.error) {
+      setCheckoutError(data.error || 'Erreur serveur')
+      setShowCheckout(false)
+      return ''
+    }
     return data.clientSecret || ''
   }, [selected])
 
@@ -180,6 +188,11 @@ export default function PremiumPage() {
             }}>
               {selected ? 'Passer au paiement — 9 € / mois' : 'Sélectionnez votre établissement'}
             </button>
+            {checkoutError && (
+              <div style={{ marginTop: 12, padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, color: '#b91c1c' }}>
+                Erreur : {checkoutError}
+              </div>
+            )}
             <p style={{ fontSize: 11, color: '#c4c4c4', textAlign: 'center', margin: '10px 0 0' }}>
               Paiement sécurisé par Stripe · CB, Apple Pay, Google Pay
             </p>

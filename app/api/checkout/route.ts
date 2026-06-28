@@ -9,20 +9,25 @@ export async function POST(req: NextRequest) {
 
   const key = process.env.STRIPE_SECRET_KEY
   const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID
-  if (!key) return NextResponse.json({ error: 'Stripe non configuré' }, { status: 500 })
-  if (!priceId) return NextResponse.json({ error: 'STRIPE_PRICE_ID non configuré' }, { status: 500 })
+  if (!key) return NextResponse.json({ error: 'STRIPE_SECRET_KEY manquant' }, { status: 500 })
+  if (!priceId) return NextResponse.json({ error: 'STRIPE_PRICE_ID manquant' }, { status: 500 })
 
-  const stripe = new Stripe(key)
-  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.koshermap.store'
+  try {
+    const stripe = new Stripe(key, { apiVersion: '2026-06-24.dahlia' })
+    const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.koshermap.store'
 
-  const session = await (stripe.checkout.sessions.create as Function)({
-    mode: 'subscription',
-    line_items: [{ price: priceId, quantity: 1 }],
-    metadata: { place_id, place_name: place_name || '' },
-    ui_mode: 'embedded',
-    return_url: `${BASE}/premium/success?place_id=${place_id}&session_id={CHECKOUT_SESSION_ID}`,
-    locale: 'fr',
-  })
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price: priceId, quantity: 1 }],
+      metadata: { place_id, place_name: place_name || '' },
+      ui_mode: 'embedded_page',
+      return_url: `${BASE}/premium/success?place_id=${place_id}&session_id={CHECKOUT_SESSION_ID}`,
+      locale: 'fr',
+    })
 
-  return NextResponse.json({ clientSecret: session.client_secret })
+    return NextResponse.json({ clientSecret: session.client_secret })
+  } catch (e: any) {
+    console.error('Stripe error:', e)
+    return NextResponse.json({ error: e?.message || 'Erreur Stripe inconnue' }, { status: 500 })
+  }
 }
