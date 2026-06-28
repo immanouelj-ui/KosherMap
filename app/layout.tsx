@@ -5,6 +5,28 @@ export const metadata: Metadata = {
   title: 'Kosher Map — Annuaire certifié',
   description: 'Trouvez les restaurants, boucheries, traiteurs et épiceries casher certifiés près de chez vous.',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  openGraph: {
+    title: 'Kosher Map — Annuaire certifié',
+    description: 'Trouvez les restaurants, boucheries, traiteurs et épiceries casher certifiés en Île-de-France.',
+    url: 'https://www.koshermap.store',
+    siteName: 'Kosher Map',
+    images: [{ url: 'https://www.koshermap.store/og.png', width: 1200, height: 630 }],
+    locale: 'fr_FR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Kosher Map — Annuaire certifié',
+    description: 'Trouvez les restaurants, boucheries, traiteurs et épiceries casher certifiés en Île-de-France.',
+    images: ['https://www.koshermap.store/og.png'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

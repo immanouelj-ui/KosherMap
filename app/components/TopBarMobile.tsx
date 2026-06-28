@@ -81,6 +81,16 @@ export default function TopBarMobile({ query, onQuery, profile, session, isAdmin
                   <i className="ti ti-shield" style={{ fontSize: 15, color: 'var(--gold)' }} /> Administration
                 </div>
               )}
+              <a
+                href="/premium"
+                onClick={() => setMenu(false)}
+                style={{ ...rowStyle, textDecoration: 'none', color: 'var(--gold)', borderBottom: '1px solid var(--border)' }}
+              >
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.6px', color: '#B8860B', background: 'rgba(184,134,11,.12)', padding: '2px 6px', borderRadius: 4 }}>
+                  PREMIUM
+                </span>
+                Mettre en avant mon établissement
+              </a>
               <div onClick={() => { onSignOut(); setMenu(false) }} style={rowStyle}>
                 <i className="ti ti-logout" style={{ fontSize: 15 }} /> Se déconnecter
               </div>
