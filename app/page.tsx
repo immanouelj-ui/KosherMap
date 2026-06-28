@@ -272,7 +272,7 @@ export default function Home() {
 
   /* ───────────────────────── DESKTOP ───────────────────────── */
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <TopBar
         query={query} onQuery={setQuery} profile={profile} session={session} isAdmin={isAdmin}
         onAdd={openAdd} onAdmin={() => window.location.href = '/admin'}
