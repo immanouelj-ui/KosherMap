@@ -27,7 +27,7 @@ export default function TopBar({ query, onQuery, profile, session, isAdmin, onAd
     <header style={{
       height: 60, background: '#fff', borderBottom: '1px solid var(--border)',
       display: 'flex', alignItems: 'center', padding: '0 18px', gap: 14,
-      flexShrink: 0, position: 'relative', zIndex: 200,
+      flexShrink: 0, position: 'relative', zIndex: 10000,
       boxShadow: '0 1px 0 var(--border)',
     }}>
       {/* Logo */}
@@ -100,7 +100,7 @@ export default function TopBar({ query, onQuery, profile, session, isAdmin, onAd
             />
           )}
           <div
-            onClick={() => session ? setMenu(m => !m) : onAuthClick()}
+            onMouseDown={e => { e.stopPropagation(); e.preventDefault(); session ? setMenu(m => !m) : onAuthClick() }}
             style={{
               width: 34, height: 34, borderRadius: '50%',
               background: session ? 'linear-gradient(135deg,#B8860B,#8B6914)' : 'var(--bg)',
