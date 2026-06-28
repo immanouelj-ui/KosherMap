@@ -42,9 +42,15 @@ export function PlaceList({ places, categories, selectedId, loading, onSelect }:
             key={p.id}
             onClick={() => onSelect(p.id)}
             style={{
-              padding: '11px 10px', borderRadius: 12, marginBottom: 2,
-              background: selected ? 'rgba(184,134,11,.06)' : 'transparent',
+              padding: '10px 10px 10px 14px',
+              borderRadius: 12,
+              marginBottom: 2,
+              background: selected
+                ? 'rgba(184,134,11,.06)'
+                : p.is_premium ? 'rgba(184,134,11,.03)' : 'transparent',
               display: 'flex', gap: 12, alignItems: 'center', cursor: 'pointer',
+              borderLeft: p.is_premium ? '3px solid rgba(184,134,11,.5)' : '3px solid transparent',
+              transition: 'background .1s',
             }}
           >
             <div style={{
@@ -57,17 +63,25 @@ export function PlaceList({ places, categories, selectedId, loading, onSelect }:
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-                  {p.is_premium && (
-                    <span title="Fiche Premium" style={{ fontSize: 13, flexShrink: 0 }}>👑</span>
-                  )}
-                  <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {p.name}
                 </div>
                 {p._distanceKm != null && (
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue)', flexShrink: 0 }}>{formatDistance(p._distanceKm)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue)', flexShrink: 0 }}>
+                    {formatDistance(p._distanceKm)}
+                  </span>
                 )}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                {p.is_premium && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: '.6px', textTransform: 'uppercase',
+                    color: '#B8860B', background: 'rgba(184,134,11,.1)',
+                    padding: '2px 6px', borderRadius: 4,
+                  }}>
+                    Premium
+                  </span>
+                )}
                 {hasCert && <span style={{ color: 'var(--green)', fontWeight: 600 }}>✓ Certifié</span>}
                 {catLabel && <span>{catLabel}</span>}
                 {openStat !== 'unknown' && (

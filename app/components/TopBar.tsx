@@ -134,10 +134,10 @@ export default function TopBar({ query, onQuery, profile, session, isAdmin, onAd
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <svg width="13" height="12" viewBox="0 0 11 10" fill="none" style={{ flexShrink: 0 }}>
-                  <path d="M1 8.5L2.2 3.2L4.8 6L5.5 1.5L6.2 6L8.8 3.2L10 8.5H1Z" fill="currentColor" stroke="currentColor" strokeWidth=".4" strokeLinejoin="round"/>
-                </svg>
-                Passer en Premium
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.6px', color: '#B8860B', background: 'rgba(184,134,11,.12)', padding: '2px 6px', borderRadius: 4 }}>
+                  PREMIUM
+                </span>
+                Mettre en avant mon établissement
               </a>
               <div
                 onClick={() => { onSignOut(); setMenu(false) }}

@@ -66,7 +66,15 @@ export default function Home() {
       return matchQ && matchCat && matchOpen && matchCertType && matchCertAuth
     })
     if (userLoc) {
-      list = [...list].sort((a, b) => (a._distanceKm ?? Infinity) - (b._distanceKm ?? Infinity))
+      list = [...list].sort((a, b) => {
+        const dA = a._distanceKm ?? Infinity
+        const dB = b._distanceKm ?? Infinity
+        const aPremiumNear = a.is_premium && dA <= 5
+        const bPremiumNear = b.is_premium && dB <= 5
+        if (aPremiumNear && !bPremiumNear) return -1
+        if (!aPremiumNear && bPremiumNear) return 1
+        return dA - dB
+      })
     }
     return list
   }, [places, query, filter, filterOpenNow, filterCertType, filterCertAuth, userLoc])
